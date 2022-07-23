@@ -3,7 +3,6 @@
 #include "src/ast/ast.hh"
 #include "src/ast/bytecode_emitter.hh"
 #include "src/bytecode/bytecode.hh"
-#include "src/bytecode/interpreter.hh"
 
 namespace {
 

@@ -53,7 +53,7 @@ void Codegen::declareFunctions() {
     auto voidTy = Type::getVoidTy(*context);
     auto *fnTy = FunctionType::get(voidTy, false);
     for (size_t i = 0; i < bytecode.chunks.size(); i++) {
-        auto name = "fn" + i;
+        auto name = "fn" + std::to_string(i);
         auto *f = Function::Create(fnTy, Function::ExternalLinkage, name, *module);
         functions.push_back(f);
     }
@@ -137,7 +137,7 @@ GlobalVariable *Codegen::createConstantStr(std::string_view str) {
     // Const address space, I couldn't find an enum outside of in the specific target headers
     std::vector<Constant *> items;
     for (size_t i = 0; i < str.size(); i++) {
-        char c = str.data()[c];
+        char c = str.data()[i];
         auto *val = ConstantInt::get(elemTy, c, true);
         items.push_back(val);
     }

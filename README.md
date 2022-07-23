@@ -12,3 +12,9 @@ we can rename it l8r
 ```sh
 $ ./tools/gencompdb.py
 ```
+### Building documentation
+```sh
+$ cargo install mdbook
+$ cd $PROJ_ROOT/doc
+$ mdbook build
+```

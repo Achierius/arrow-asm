@@ -1,5 +1,5 @@
 cc_binary(
     name = "driver",
     srcs = ["main.cc"],
-    deps = ["//src/ast:ast"],
+    deps = ["//src/ast:ast", "//src/parser:parser"],
 )

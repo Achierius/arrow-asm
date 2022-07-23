@@ -1,0 +1,6 @@
+cc_library(
+    name = "parser",
+    hdrs = ["parser.hh"],
+    srcs = ["parser.cc"],
+    visibility = ["//visibility:public"],
+)

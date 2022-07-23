@@ -1,3 +1,5 @@
+load("@com_github_google_cel-cpp//bazel:antlr.bzl", "antlr_cc_library")
+
 cc_library(
     name = "hello_lib",
     srcs = [
@@ -16,4 +18,10 @@ cc_binary(
     deps = [
         ":hello_lib",
     ],
+)
+
+antlr_cc_library(
+    name = "Test",
+    src = "Test.g4",
+    package = "example",
 )

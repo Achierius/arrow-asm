@@ -1,7 +1,36 @@
 workspace(name = "beautiful-asm")
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_jar")
+ANTLR4_VERSION = "4.10.1"
+
+# Build ANTLR codegen
+git_repository(
+    name = "com_github_google_cel-cpp",
+    commit = "1e0fd3d957a22e853c9b9bc9f682eaba67b9757f",
+    remote = "https://github.com/google/cel-cpp",
+    shallow_since = "1654569490 -0700"
+)
+http_archive(
+    name = "antlr4_runtimes",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "cpp",
+    srcs = glob(["runtime/Cpp/runtime/src/**/*.cpp"]),
+    hdrs = glob(["runtime/Cpp/runtime/src/**/*.h"]),
+    includes = ["runtime/Cpp/runtime/src"],
+)
+  """,
+    sha256 = "a320568b738e42735946bebc5d9d333170e14a251c5734e8b852ad1502efa8a2",
+    strip_prefix = "antlr4-" + ANTLR4_VERSION,
+    urls = ["https://github.com/antlr/antlr4/archive/v" + ANTLR4_VERSION + ".tar.gz"],
+)
+http_jar(
+    name = "antlr4_jar",
+    urls = ["https://www.antlr.org/download/antlr-" + ANTLR4_VERSION + "-complete.jar"],
+    sha256 = "41949d41f20d31d5b8277187735dd755108df52b38db6c865108d3382040f918",
+)
 
 # Build C++ binaries
 http_archive(
@@ -43,4 +72,3 @@ git_repository(
     remote = "https://github.com/google/googletest",
     shallow_since = "1603130496 -0400",
 )
-

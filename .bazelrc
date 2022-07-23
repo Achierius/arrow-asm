@@ -1,1 +1,1 @@
-build --cxxopt='-std=c++2a'
+build --cxxopt='-std=c++2a' --incompatible_enable_cc_toolchain_resolution

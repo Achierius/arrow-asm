@@ -6,3 +6,9 @@ we can rename it l8r
 - [ ] Modules
 - [ ] Assembly-like language
 - [ ] Well defined type system
+
+## Docs
+### Generating compilation database
+```sh
+$ ./tools/gencompdb.py
+```

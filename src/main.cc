@@ -4,6 +4,8 @@
 #include <iostream>
 #include <variant>
 
+// headers defined by targets that are child nodes in the
+// directory tree can be referred to by the package path directly
 #include "ast/ast.hh"
 #include "parser/parser.hh"
 

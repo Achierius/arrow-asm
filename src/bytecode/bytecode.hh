@@ -11,9 +11,9 @@ namespace bytecode {
 
 using Value = int64_t;
 using Address = uint64_t; // TODO wrap this in a struct to prevent conversion
-using Instruction = struct {
+struct Instruction {
   Opcode opcode;
-  int8_t param;
+  int8_t param = 0;
 };
 
 // Single function w/ associated constants. Kinda like an elf section but it has

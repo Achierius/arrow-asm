@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>
 #include <unordered_map>
+#include <string>
 
 #include "opcodes.hh"
 
@@ -12,7 +13,7 @@ using Value = int64_t;
 using Address = uint64_t; // TODO wrap this in a struct to prevent conversion
 using Instruction = struct {
   Opcode opcode;
-  std::byte param;
+  int8_t param;
 };
 
 // Single function w/ associated constants. Kinda like an elf section but it has

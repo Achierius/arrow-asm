@@ -14,17 +14,19 @@ enum AstNodeType {
   kNop,
 };
 
-template <AstNodeType node_type> struct BaseAstNode {
+template <AstNodeType node_type> struct AstNode {
   constexpr static AstNodeType type = node_type;
-  std::string_view source_location; // TODO(marcus@)
+  //std::string_view source_location; // TODO(marcus@)
 };
 
-struct NopNode : public BaseAstNode<kNop> {};
+struct NopNode : public AstNode<kNop> {};
 
-struct StatementNode : public BaseAstNode<kNop>,
-                       public std::variant<std::monostate, NopNode> {};
+struct StatementNode : public AstNode<kNop>,
+                       public std::variant<std::monostate, NopNode> {
+ using std::variant<std::monostate, NopNode>::operator=;
+};
 
-struct ProgramNode : public BaseAstNode<kProgram> {
+struct ProgramNode : public AstNode<kProgram> {
   std::vector<StatementNode> statements;
 };
 

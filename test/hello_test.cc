@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 namespace {
-TEST(NoopTest, NoopTest) {
+TEST(HelloTest, HelloTest) {
     EXPECT_TRUE(true);
 }
 }

@@ -1,0 +1,19 @@
+cc_library(
+    name = "hello_lib",
+    srcs = [
+        "hello_world.cc",
+    ],
+    hdrs = [
+        "hello_world.hh",
+    ],
+)
+
+cc_binary(
+    name = "hello_world",
+    srcs = [
+        "hello.cc",
+    ],
+    deps = [
+        ":hello_lib",
+    ],
+)

@@ -1,32 +1,14 @@
-# Prerequisites
-*.d
+# macOS
+.DS_Store
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# ignore all bazel- symlinks
+/bazel-*
 
-# Precompiled Headers
-*.gch
-*.pch
+# ignore compile commands database
+compile_commands.json
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# ignore user bazelrc file
+user.bazelrc
 
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+# ignore clangd cache
+.cache/

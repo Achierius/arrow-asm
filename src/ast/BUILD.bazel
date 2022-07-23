@@ -1,6 +1,6 @@
 cc_library(
     name = "ast",
-    hdrs = ["ast.hpp"],
+    hdrs = ["ast.hh"],
     srcs = [],
     visibility = ["//visibility:public"],
 )

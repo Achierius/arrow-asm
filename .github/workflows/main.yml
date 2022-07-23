@@ -9,6 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: build
-        run: bazel build //...
+        run: bazel build //... --sandbox_debug
       - name: test
-        run: bazel test //...
+        run: bazel test //... --sandbox_debug

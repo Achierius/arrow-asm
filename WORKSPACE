@@ -93,3 +93,14 @@ git_repository(
     remote = "https://github.com/google/googletest",
     shallow_since = "1603130496 -0400",
 )
+
+http_archive(
+    name = "llvm-raw",
+    build_file_content = "# empty",
+    sha256 = "4ea8f7c0c04a9cd54a83ba979f1a8853c82f776e2640ce7aeb914ae6e5cbf695",
+    strip_prefix = "llvm-project-f28c006a5895fc0e329fe15fead81e37457cb1d1",
+    urls = ["https://github.com/llvm/llvm-project/archive/f28c006a5895fc0e329fe15fead81e37457cb1d1.tar.gz"],
+)
+load("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure", "llvm_disable_optional_support_deps")
+llvm_configure(name = "llvm-project")
+llvm_disable_optional_support_deps()

@@ -25,3 +25,17 @@ antlr_cc_library(
     src = "Test.g4",
     package = "example",
 )
+
+cc_library(
+    name = "llvm_test",
+    hdrs = [
+        "llvm_test.hh",
+    ],
+    srcs = [
+        "llvm_test.cc",
+    ],
+    deps = [
+        "@llvm-project//llvm:ir_headers",
+        "@llvm-project//llvm:Support",
+    ],
+)

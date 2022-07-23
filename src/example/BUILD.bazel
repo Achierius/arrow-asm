@@ -21,7 +21,7 @@ cc_binary(
 )
 
 antlr_cc_library(
-    name = "Test",
+    name = "TestAntlr",
     src = "Test.g4",
     package = "example",
 )

@@ -17,6 +17,7 @@ cc_binary(
     ],
     deps = [
         ":hello_lib",
+        "@com_github_gabime_spdlog//:spdlog",
     ],
 )
 

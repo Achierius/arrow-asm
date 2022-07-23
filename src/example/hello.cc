@@ -1,8 +1,10 @@
 #include "hello_world.hh"
 
+#include "spdlog/spdlog.h"
 #include <iostream>
 
 int main() {
-    std::cout << hello_world();
-    return 0;
+  SPDLOG_WARN("hello");
+  std::cout << hello_world();
+  return 0;
 }

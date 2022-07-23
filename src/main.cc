@@ -32,8 +32,6 @@ int main(int argc, char *argv[]) {
     program_text = str_buffer.str();
   }
 
-  spdlog::cfg::load_env_levels();
-
   // now drive our compilation stack (sans code emission) to run it
   // also just a general top-level TODO: need to make sure we actually pass
   // along source locations so that we can give useful errors

@@ -12,3 +12,7 @@ user.bazelrc
 
 # ignore clangd cache
 .cache/
+
+# vim
+.*.swp
+.*.swo

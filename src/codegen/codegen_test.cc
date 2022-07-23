@@ -11,6 +11,7 @@ int main() {
         { kAddLong, 0 },
         { kImmByte, 2 },
         { kMulLong, 0 },
+        { kPrintLong, 0 },
         { kReturn, 0 }
     };
     BytecodeExecutable exec;

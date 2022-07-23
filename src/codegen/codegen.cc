@@ -7,9 +7,9 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -24,6 +24,12 @@ std::pair<llvm::Value *, llvm::Value *> popTwo(std::vector<llvm::Value *> &stack
     return std::make_pair(a, b);
 }
 
+llvm::Value *popOne(std::vector<llvm::Value *> &stack) {
+    llvm::Value *a = *(stack.end() - 1);
+    stack.pop_back();
+    return a;
+}
+
 class Codegen {
   private:
     std::unique_ptr<LLVMContext> context;
@@ -32,6 +38,9 @@ class Codegen {
     BytecodeExecutable &bytecode;
 
     Function *printfFn;
+    GlobalValue *longFmtStr;
+    GlobalValue *charFmtStr;
+    GlobalValue *doubleFmtStr;
 
     std::vector<Function *> functions;
 
@@ -88,12 +97,16 @@ void Codegen::emitFunction(Function *f, BytecodeChunk &chunk, Address &address) 
         case kBreakpoint:
             // TODO
             break;
-        case kPrintLong:
-            
+        case kPrintLong: {
+            std::vector<llvm::Value *> args = {longFmtStr, popOne(stack)};
+            builder->CreateCall(printfFn, args);
             break;
-        case kPrintChar:
-            // TODO
+        }
+        case kPrintChar: {
+            std::vector<llvm::Value *> args = {charFmtStr, popOne(stack)};
+            builder->CreateCall(printfFn, args);
             break;
+        }
         case kNop:
             break;
         case kAddLong: {
@@ -108,7 +121,7 @@ void Codegen::emitFunction(Function *f, BytecodeChunk &chunk, Address &address) 
         }
         case kImmByte: {
             auto *ty = Type::getInt64Ty(*context);
-            auto *val = ConstantInt::get(ty, (int64_t) ins.param, true);
+            auto *val = ConstantInt::get(ty, (int64_t)ins.param, true);
             stack.push_back(val);
             break;
         }
@@ -143,7 +156,8 @@ GlobalVariable *Codegen::createConstantStr(std::string_view str) {
     }
     items.push_back(Constant::getNullValue(elemTy));
     auto arr = ConstantArray::get(arrTy, items);
-    auto global = new GlobalVariable(*module, arrTy, true, GlobalValue::InternalLinkage, arr, "", nullptr, GlobalVariable::NotThreadLocal, 4);
+    auto global = new GlobalVariable(*module, arrTy, true, GlobalValue::InternalLinkage, arr, "",
+                                     nullptr, GlobalVariable::NotThreadLocal, 4);
     return global;
 }
 
@@ -153,9 +167,12 @@ Codegen::Codegen(BytecodeExecutable &bytecode) : bytecode{bytecode} {
     builder = std::make_unique<IRBuilder<>>(*context);
 
     auto *i32 = Type::getInt32Ty(*context);
-    auto *i8 = Type::getInt8Ty(*context);
     auto *ptr = Type::getInt8PtrTy(*context);
-    FunctionType::get(i32, ptr, true);
+    auto *printfTy = FunctionType::get(i32, ptr, true);
+    printfFn = Function::Create(printfTy, Function::ExternalLinkage, "printf", *module);
+    longFmtStr = createConstantStr("%li");
+    charFmtStr = createConstantStr("%c");
+    doubleFmtStr = createConstantStr("%f");
 }
 
 void Codegen::generate() {

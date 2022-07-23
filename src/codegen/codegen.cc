@@ -7,7 +7,7 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetSelect.h"
@@ -108,7 +108,7 @@ void Codegen::emitFunction(Function *f, BytecodeChunk &chunk, Address &address) 
         }
         case kImmByte: {
             auto *ty = Type::getInt64Ty(*context);
-            auto *val = ConstantInt::get(ty, 0, true);
+            auto *val = ConstantInt::get(ty, (int64_t) ins.param, true);
             stack.push_back(val);
             break;
         }

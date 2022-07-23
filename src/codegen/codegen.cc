@@ -143,7 +143,6 @@ void Codegen::writeObject(std::string_view outputPath) {
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
-    InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
 
     auto targetTriple = sys::getDefaultTargetTriple();

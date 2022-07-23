@@ -3,6 +3,7 @@ workspace(name = "beautiful-asm")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# Build C++ binaries
 http_archive(
     name = "rules_cc",
     sha256 = "76737f9070decb43c9f1c6f1f7c4e40555de09f4312ad7e63f4f4727911d1478",
@@ -10,6 +11,16 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_cc/archive/9ec8187d589e7554e8cfe8d14b3917ebe4b94940.tar.gz"],
 )
 
+# Generate compilation databases
+http_archive(
+    name = "bazel_compdb",
+    #patches = ["//foreign:comp_db.patch"],
+    sha256 = "d51f8168954d4aa0ca984f53a1a6be298d827ff39303d10522dffb2a5c1942dc",
+    strip_prefix = "bazel-compilation-database-0.5.0",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.0.tar.gz"],
+)
+
+# ------ C++ LIBRARIES ------
 http_archive(
     name = "com_github_fmtlib_fmt",
     build_file = "//foreign:fmt.BUILD",

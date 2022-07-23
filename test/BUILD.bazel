@@ -22,3 +22,15 @@ cc_test(
         "//src/bytecode:bytecode",
     ],
 )
+
+cc_test(
+    name = "bytecode_unit_tests",
+    srcs = [
+        "bytecode_unit_tests.cc",
+    ],
+    deps = [
+        "@com_github_google_googletest//:gtest",
+        "@com_github_google_googletest//:gtest_main",
+        "//src/bytecode:bytecode",
+    ],
+)

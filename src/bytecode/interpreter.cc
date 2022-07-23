@@ -5,11 +5,17 @@
 #include <stack>
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+#include "spdlog/cfg/env.h"
+#include "fmt/core.h"
+#include "fmt/color.h"
+
 #include "opcodes.hh"
 
 #define DISPATCH_NO_INCR_PC()                                    \
   do {                                                           \
   instr = chunks[chunk_ptr].first.code[instruction_ptr];         \
+  debug_dispatch_hook();                                         \
   goto *(opcode_dispatch_table[static_cast<int>(instr.opcode)]); \
   } while (false);                                               \
 
@@ -21,12 +27,12 @@
 
 // I tried doing this with a repetition macro but it was 5am so I gave up
 #define EMPTY_OPCODE &&BadOpcode
-#define EMPTY_OPCODES_4    \
+#define EMPTY_OPCODES_4()  \
   &&BadOpcode,             \
   &&BadOpcode,             \
   &&BadOpcode,             \
   &&BadOpcode
-#define EMPTY_OPCODES_8    \
+#define EMPTY_OPCODES_8()  \
   &&BadOpcode,             \
   &&BadOpcode,             \
   &&BadOpcode,             \
@@ -83,7 +89,10 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&Breakpoint,
     &&PrintLong,
     &&PrintChar,
-    EMPTY_OPCODES_12(),
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_8(),
     /********** 0x10 **********/
     &&Nop,
     &&AddLong,
@@ -127,16 +136,27 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   };
 
   // set up virtual machine state
-  int chunk_ptr = 0; // current executing chunk
+  int chunk_ptr = 0;       // current executing chunk
+  int cycle_count = 0;     // how many instructions we've executed
   int instruction_ptr = 0; // within chunk
   std::stack<Value> stack;
   Instruction instr;
+
+  // debug-only hook that gets called every time we dispatch to let us log stuff
+  auto debug_dispatch_hook = [&](){
+    spdlog::debug("{:0>6} {:0>8} {:0>16x}: {} {}", cycle_count, chunk_ptr,
+                  instruction_ptr, instr.opcode, instr.param);
+    cycle_count++;
+  };
 
   DISPATCH_NO_INCR_PC(); // kick it off and it'll drive itself
 
 BadOpcode:
   // TODO spdlog this
+  spdlog::critical("bad opcode at {:0>8}:{:0>16x}", chunk_ptr, instruction_ptr);
+  std::abort();
 Trap:
+  spdlog::critical("user code trap");
   std::abort();
 Return:
   return stack.top();

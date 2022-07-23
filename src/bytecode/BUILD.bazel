@@ -3,5 +3,8 @@ cc_library(
     hdrs = ["bytecode.hh", "interpreter.hh", "opcodes.hh"],
     srcs = ["interpreter.cc"],
     visibility = ["//visibility:public"],
-    deps = [ ],
+    deps = [
+        "@com_github_gabime_spdlog//:spdlog",
+        "@com_github_fmtlib_fmt//:fmt",
+    ],
 )

@@ -3,4 +3,7 @@ cc_library(
     hdrs = ["parser.hh"],
     srcs = ["parser.cc"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//src/ast:ast",
+    ],
 )

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -13,15 +14,15 @@ enum AstNodeType {
   kNop,
 };
 
-template <AstNodeType node_type>
-struct BaseAstNode {
+template <AstNodeType node_type> struct BaseAstNode {
   constexpr static AstNodeType type = node_type;
   std::string_view source_location; // TODO(marcus@)
 };
 
-struct NopNode : public BaseAstNode<kNop> { };
+struct NopNode : public BaseAstNode<kNop> {};
 
-struct StatementNode : public BaseAstNode<kNop>, public std::variant<std::monostate, NopNode> { };
+struct StatementNode : public BaseAstNode<kNop>,
+                       public std::variant<std::monostate, NopNode> {};
 
 struct ProgramNode : public BaseAstNode<kProgram> {
   std::vector<StatementNode> statements;

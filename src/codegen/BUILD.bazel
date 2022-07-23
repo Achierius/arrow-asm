@@ -6,5 +6,18 @@ cc_library(
     deps = [
         "//src/bytecode:bytecode",
         "@llvm-project//llvm:ir_headers",
+        "@llvm-project//llvm:Target",
+        "@com_github_gabime_spdlog//:spdlog",
+    ],
+)
+
+cc_binary(
+    name = "codegen_test",
+    srcs = [
+        "codegen_test.cc",
+    ],
+    deps = [
+        ":codegen",
+        "@com_github_gabime_spdlog//:spdlog",
     ],
 )

@@ -1,0 +1,10 @@
+cc_library(
+    name = "codegen",
+    hdrs = ["codegen.hh"],
+    srcs = ["codegen.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/bytecode:bytecode",
+        "@llvm-project//llvm:ir_headers",
+    ],
+)

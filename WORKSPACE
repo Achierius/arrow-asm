@@ -26,3 +26,10 @@ http_archive(
     urls = ["https://github.com/gabime/spdlog/archive/729d7f6d8837b6693e7b378408518ea1710f80cb.tar.gz"],
 )
 
+git_repository(
+    name = "com_github_google_googletest",
+    commit = "620659ed92829a88ee34134c782bf5b5aa5a0a0c",
+    remote = "https://github.com/google/googletest",
+    shallow_since = "1603130496 -0400",
+)
+

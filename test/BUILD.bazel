@@ -1,0 +1,11 @@
+cc_test(
+    name = "hello_test",
+    srcs = [
+        "hello_test.cc",
+    ],
+    deps = [
+        "@com_github_google_googletest//:gtest",
+        "@com_github_google_googletest//:gtest_main",
+    ],
+)
+

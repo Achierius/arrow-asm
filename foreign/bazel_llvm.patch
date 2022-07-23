@@ -1,0 +1,66 @@
+diff --git a/13.0.0/BUILD b/13.0.0/BUILD
+--- 13.0.0/BUILD
++++ 13.0.0/BUILD
+@@ -6,7 +6,7 @@ licenses(["notice"])
+ cc_library(
+     name = "13.0.0",
+     data = select({
+-        "//:darwin": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:libdir"],
++        "@platforms//os:osx": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:libdir"],
+         "//conditions:default": [
+             "@clang-llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04//:libdir",
+         ],
+@@ -17,7 +17,7 @@ cc_library(
+     ],
+     linkopts = select({
+         # llvm-config --ldflags
+-        "//:darwin": [
++        "@platforms//os:osx": [
+             "-Wl,-rpath,$(location @clang-llvm-13.0.0-x86_64-apple-darwin//:libdir)/",
+             "-L$(location @clang-llvm-13.0.0-x86_64-apple-darwin//:libdir)/",
+             "-Wl,-search_paths_first",
+@@ -29,7 +29,7 @@ cc_library(
+         ],
+     }) + select({
+         # llvm-config --system-libs
+-        "//:darwin": [
++        "@platforms//os:osx": [
+             "-lz",
+             "-lcurses",
+             "-lm",
+@@ -225,7 +225,7 @@ cc_library(
+         "-lLLVMDemangle",
+     ],
+     deps = select({
+-        "//:darwin": [
++        "@platforms//os:osx": [
+             "@clang-llvm-13.0.0-x86_64-apple-darwin//:headers",
+             "@clang-llvm-13.0.0-x86_64-apple-darwin//:libs",
+         ],
+@@ -241,7 +241,7 @@ cc_library(
+ genrule(
+     name = "make_clang",
+     srcs = select({
+-        "//:darwin": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:clang"],
++        "@platforms//os:osx": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:clang"],
+         "//conditions:default": ["@clang-llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04//:clang"],
+     }),
+     outs = ["clang"],
+@@ -251,7 +251,7 @@ genrule(
+ genrule(
+     name = "make_clang++",
+     srcs = select({
+-        "//:darwin": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:clang++"],
++        "@platforms//os:osx": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:clang++"],
+         "//conditions:default": ["@clang-llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04//:clang++"],
+     }),
+     outs = ["clang++"],
+@@ -261,7 +261,7 @@ genrule(
+ genrule(
+     name = "make_opt",
+     srcs = select({
+-        "//:darwin": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:opt"],
++        "@platforms//os:osx": ["@clang-llvm-13.0.0-x86_64-apple-darwin//:opt"],
+         "//conditions:default": ["@clang-llvm-13.0.0-x86_64-linux-gnu-ubuntu-20.04//:opt"],
+     }),
+     outs = ["opt"],

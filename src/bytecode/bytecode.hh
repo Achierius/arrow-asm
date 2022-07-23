@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cstddef>
-#include <vector>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 #include "opcodes.hh"
 

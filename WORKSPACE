@@ -121,6 +121,7 @@ http_archive(
     name = "llvm",
     strip_prefix = "bazel_llvm-4f47105d6200a8846ba9b9b5058192f13b12cfe3",
     urls = ["https://github.com/ChrisCummins/bazel_llvm/archive/4f47105d6200a8846ba9b9b5058192f13b12cfe3.tar.gz"],
+    patches = ["//foreign:bazel_llvm.patch"],
 )
 load("@llvm//tools/bzl:deps.bzl", "llvm_deps")
 llvm_deps()

@@ -10,10 +10,16 @@ enum Opcode {
   kPrintLong = 0x03,
   kPrintChar = 0x04,
   
-  // Arithmetic operations
+  // Binary Arithmetic operations
   kNop = 0x10,
   kAddLong = 0x11,
-  kMulLong = 0x12,
+  kSubLong = 0x12,
+  kMulLong = 0x13,
+  kIDivLong = 0x14,    // pushes TOS1 / TOS
+  kModuloLong = 0x15,  // pushes TOS1 % TOS
+  kLeftShiftLong = 0x16, // pushes TOS1 << TOS
+  kRightShiftLogicalLong = 0x17, // pushes TOS1 >> TOS
+  kRightShiftArithmeticLong = 0x18, // pushes TOS1 >>> TOS
 
   // Loading/storing
   kImmByte = 0x40,

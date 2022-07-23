@@ -31,11 +31,14 @@ class Codegen {
     std::unique_ptr<IRBuilder<>> builder;
     BytecodeExecutable &bytecode;
 
+    Function *printfFn;
+
     std::vector<Function *> functions;
 
     void declareFunctions();
     void defineFunctions();
     void emitFunction(Function *f, BytecodeChunk &chunk, Address &address);
+    GlobalVariable *createConstantStr(std::string_view str);
 
   public:
     Codegen(BytecodeExecutable &bytecode);
@@ -86,7 +89,7 @@ void Codegen::emitFunction(Function *f, BytecodeChunk &chunk, Address &address) 
             // TODO
             break;
         case kPrintLong:
-            // TODO
+            
             break;
         case kPrintChar:
             // TODO
@@ -128,10 +131,31 @@ void Codegen::emitFunction(Function *f, BytecodeChunk &chunk, Address &address) 
     verifyFunction(*f);
 }
 
+GlobalVariable *Codegen::createConstantStr(std::string_view str) {
+    auto elemTy = Type::getInt8Ty(*context);
+    auto arrTy = ArrayType::get(elemTy, str.size() + 1);
+    // Const address space, I couldn't find an enum outside of in the specific target headers
+    std::vector<Constant *> items;
+    for (size_t i = 0; i < str.size(); i++) {
+        char c = str.data()[c];
+        auto *val = ConstantInt::get(elemTy, c, true);
+        items.push_back(val);
+    }
+    items.push_back(Constant::getNullValue(elemTy));
+    auto arr = ConstantArray::get(arrTy, items);
+    auto global = new GlobalVariable(*module, arrTy, true, GlobalValue::InternalLinkage, arr, "", nullptr, GlobalVariable::NotThreadLocal, 4);
+    return global;
+}
+
 Codegen::Codegen(BytecodeExecutable &bytecode) : bytecode{bytecode} {
     context = std::make_unique<LLVMContext>();
     module = std::make_unique<Module>("beautiful-asm-test", *context);
     builder = std::make_unique<IRBuilder<>>(*context);
+
+    auto *i32 = Type::getInt32Ty(*context);
+    auto *i8 = Type::getInt8Ty(*context);
+    auto *ptr = Type::getInt8PtrTy(*context);
+    FunctionType::get(i32, ptr, true);
 }
 
 void Codegen::generate() {

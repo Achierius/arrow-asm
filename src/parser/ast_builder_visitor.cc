@@ -240,9 +240,9 @@ namespace parser {
   }
 
   std::any ASTBuilderVisitor::visitAny_number(BeautifulAsmParser::Any_numberContext *ctx) {
-    // TODO: Bring this back at some point
-    // if (ctx->getText().find('.'))
-    //   return ast::ImmediateNode(std::stod(ctx->getText()));
+    std::string text = ctx->getText();
+    if (text.find('.') != std::string::npos)
+      return ast::ImmediateNode(std::stod(ctx->getText()));
     return ast::ImmediateNode(static_cast<int64_t>(std::stol(ctx->getText())));
   }
 

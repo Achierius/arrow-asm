@@ -30,7 +30,7 @@ TEST(Bytecode, BasicTest) {
       { kReturn },
   });
   int return_value = InterpretBytecode(bin);
-  EXPECT_EQ(return_value, 0);
+  EXPECT_EQ(return_value, 3);
 }
 
 TEST(Bytecode, ConstantTestBasic) {

@@ -4,8 +4,8 @@
 #include "src/ast/ast.hh"
 #include "src/parser/BeautifulAsmLexer.h"
 #include "src/parser/BeautifulAsmParser.h"
-#include <string_view>
+#include <string>
 
 namespace parser {
-ast::ProgramNode ParseFullProgram(std::string_view program_text);
+ast::ProgramNode ParseFullProgram(std::string program_text);
 } // namespace parser

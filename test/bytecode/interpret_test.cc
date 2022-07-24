@@ -11,12 +11,12 @@ TEST(InterpretBytecodeTest, OneChunkOneNopTest) {
     .code{{
       { bytecode::Opcode::kNop, 0 },
     }},
-    .constant_pool{},
-    .symbol_pool{},
+    .constants{},
   };
 
   bytecode::BytecodeExecutable executable {
-    .chunks{{ chunk, 0ull }},
+    .chunks{ chunk },
+    .chunk_locations { 0ull },
     .globals{},
     .symbol_table{},
   };

@@ -51,6 +51,7 @@ instructions : instruction*;
 instruction : arrow_instruction
             | no_arg_instruction
             | print_instruction
+            | printch_instruction
             | exit_instruction
             | call_instruction
             | binary_operator_instruction
@@ -61,6 +62,7 @@ arrow_instruction           : arrow_lhs ARROW arrow_rhs;
 no_arg_instruction          : no_arg_operator;
 call_instruction            : 'call' ID;
 print_instruction           : 'print' arg1=any_argument;
+printch_instruction         : 'printch' arg1=any_argument;
 exit_instruction            : 'exit' arg1=any_argument;
 binary_operator_instruction : binary_operator arg1=any_lvalue ',' arg2=any_argument ',' arg3=any_argument;
 memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_destination;

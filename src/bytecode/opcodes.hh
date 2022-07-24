@@ -5,7 +5,7 @@ namespace bytecode {
 enum Opcode {
   // Debug/error ops
   kTrap = 0x00,
-  kReturn = 0x01,
+  kExit= 0x01,
   kBreakpoint = 0x02,
   kPrintLong = 0x03,
   kPrintChar = 0x04,
@@ -20,16 +20,41 @@ enum Opcode {
   kLeftShiftLong = 0x16, // pushes TOS1 << TOS
   kRightShiftLogicalLong = 0x17, // pushes TOS1 >> TOS
   kRightShiftArithmeticLong = 0x18, // pushes TOS1 >>> TOS
+  kLogicalAndLong = 0x19,
+  kLogicalOrLong = 0x1A,
+  kUnaryNegate = 0x1B,
+  kAddFloat = 0x1C,
+  kSubFloat = 0x1D,
+  kMulFloat = 0x1E,
+  kDivFloat = 0x1F,
 
   // Loading/storing
   kImmByte = 0x40,
   kConstant = 0x41,
   kBiasConstantWindow = 0x42,
+  kLoadGlobal = 0x43,
+  kStoreGlobal = 0x44,
+  kBiasGlobalWindow = 0x45,
 
   // Stack manipulation
   kDup = 0x60,
   kRot2 = 0x61,
   kRot3 = 0x62,
+
+  // Control flow
+  kJump = 0x70, // jumps to pc + 1 + IMM
+  kTestAndJump = 0x71, // pops TOS, jumps to pc + 1 + IMM iff TOS != 0
+  kCall = 0x72,
+  kReturn = 0x73,
+
+  // Objects
+  kAllocate = 0x80, // Allocates TOS bytes, pushes pointer to stack
+  kAllocateImm = 0x81, // Allocates IMM bytes, pushes pointer to stack
+  kDeallocate = 0x82, // Deallocates the buffer pointed to by TOS
+  kLoadClassConstructor = 0x83, // Class determined by Imm
+  kLoadClassDestructor = 0x84, // Class determined by Imm
+  kLoadObjectField = 0x85, // push IMMth field of object @ *TOS
+  kStoreObjectField = 0x86, // pop TOS into IMMth field of object @ *TOS1
 };
 
 } // namespace bytecode

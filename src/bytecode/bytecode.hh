@@ -12,6 +12,9 @@ namespace bytecode {
 
 using Value = int64_t;
 using Address = uint64_t; // TODO wrap this in a struct to prevent conversion
+struct ObjectId {
+  int index;
+};
 struct Instruction {
   Opcode opcode;
   int8_t param = 0;
@@ -32,7 +35,7 @@ struct BytecodeChunk {
 // these are at the very least -- but for a first draft the linker could just
 // trust that the symbol is the right type and plug the address in??
 // Monostate -> undefined symbol
-using Symbol = std::variant<std::monostate, Address>;
+using Symbol = std::variant<std::monostate, Address, ObjectId>;
 
 // TODO this should be rebundled as a class w/ invariants
 struct BytecodeExecutable {

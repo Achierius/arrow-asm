@@ -92,7 +92,15 @@ no_arg_operator : 'nop'
                 | 'continue';
 
 binary_operator : 'add'
-                | 'mul';
+                | 'sub'
+                | 'mul'
+                | 'div'
+                | 'mod'
+                | 'sll'
+                | 'srl'
+                | 'sra'
+                | 'and'
+                | 'or';
 
 memory_operator : 'load'
                 | 'store';

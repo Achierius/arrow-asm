@@ -159,7 +159,15 @@ namespace parser {
 
   std::any ASTBuilderVisitor::visitBinary_operator(BeautifulAsmParser::Binary_operatorContext *ctx) {
     if (ctx->getText() == "add") return ast::BinaryOperator::kAdd;
+    if (ctx->getText() == "sub") return ast::BinaryOperator::kSub;
     if (ctx->getText() == "mul") return ast::BinaryOperator::kMul;
+    if (ctx->getText() == "div") return ast::BinaryOperator::kDiv;
+    if (ctx->getText() == "mod") return ast::BinaryOperator::kMod;
+    if (ctx->getText() == "sll") return ast::BinaryOperator::kSll;
+    if (ctx->getText() == "srl") return ast::BinaryOperator::kSrl;
+    if (ctx->getText() == "sra") return ast::BinaryOperator::kSra;
+    if (ctx->getText() == "and") return ast::BinaryOperator::kAnd;
+    if (ctx->getText() == "or") return ast::BinaryOperator::kOr;
     return {};
   }
 

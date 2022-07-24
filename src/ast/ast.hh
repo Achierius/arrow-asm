@@ -162,7 +162,15 @@ struct NoRetNode : public AstNode<kNoRetInst> {
 // BinaryNode
 enum class BinaryOperator {
   kAdd,
-  kMul
+  kSub,
+  kMul,
+  kDiv,
+  kMod,
+  kSll,
+  kSrl,
+  kSra,
+  kAnd,
+  kOr,
 };
 struct BinaryNode : public AstNode<kBinaryInst> {
   LValueNode lhs;

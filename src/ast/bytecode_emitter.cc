@@ -85,6 +85,13 @@ void Emit(bytecode::BytecodeChunk& chunk, bytecode::Instruction const& inst) {
   chunk.code.push_back(inst);
 }
 
+void EmitNoParam(bytecode::BytecodeChunk& chunk, bytecode::Opcode opcode) {
+  Emit(chunk, bytecode::Instruction{
+    .opcode = opcode,
+    .param = 0
+  });
+}
+
 int8_t TranslateRegister(ast::RegisterNode const& node) {
   switch (node.category) {
     // TODO: Assert that the register_id is valid!
@@ -338,20 +345,36 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
     EmitArg(chunk, ctx, arg2);
     // TODO: Not always Add/Mul LONG
     switch (node.op) {
-      case ast::BinaryOperator::kAdd: {
-        Emit(chunk, bytecode::Instruction{
-          .opcode = bytecode::Opcode::kAddLong,
-          .param = 0
-        });
+      case ast::BinaryOperator::kAdd: 
+        EmitNoParam(chunk, bytecode::Opcode::kAddLong);
         break;
-      }
-      case ast::BinaryOperator::kMul: {
-        Emit(chunk, bytecode::Instruction{
-          .opcode = bytecode::Opcode::kMulLong,
-          .param = 0
-        });
+      case ast::BinaryOperator::kSub: 
+        EmitNoParam(chunk, bytecode::Opcode::kSubLong);
         break;
-      }
+      case ast::BinaryOperator::kMul: 
+        EmitNoParam(chunk, bytecode::Opcode::kMulLong);
+        break;
+      case ast::BinaryOperator::kDiv: 
+        EmitNoParam(chunk, bytecode::Opcode::kIDivLong);
+        break;
+      case ast::BinaryOperator::kMod: 
+        EmitNoParam(chunk, bytecode::Opcode::kModuloLong);
+        break;
+      case ast::BinaryOperator::kSll: 
+        EmitNoParam(chunk, bytecode::Opcode::kLeftShiftLong);
+        break;
+      case ast::BinaryOperator::kSrl: 
+        EmitNoParam(chunk, bytecode::Opcode::kRightShiftLogicalLong);
+        break;
+      case ast::BinaryOperator::kSra: 
+        EmitNoParam(chunk, bytecode::Opcode::kRightShiftArithmeticLong);
+        break;
+      case ast::BinaryOperator::kAnd: 
+        EmitNoParam(chunk, bytecode::Opcode::kLogicalAndLong);
+        break;
+      case ast::BinaryOperator::kOr: 
+        EmitNoParam(chunk, bytecode::Opcode::kLogicalOrLong);
+        break;
       default:
         // TODO: ERROR (Unsupported binary inst)
         break;

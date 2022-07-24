@@ -19,6 +19,11 @@
 #include "spdlog/cfg/env.h"
 
 int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    spdlog::error("no inputs given");
+    return -1;
+  }
+
   // load the file passed in by the first argument as our input program
   std::string program_text{""};
   if (!std::strcmp(argv[1], "-")) { // conventionally refers to stdin, use it instead of file
@@ -30,6 +35,10 @@ int main(int argc, char *argv[]) {
   } else {
     std::stringstream str_buffer;
     std::ifstream ifs(argv[1]);
+    if (!ifs) {
+      spdlog::error("could not open input file");
+      return -1;
+    }
     str_buffer << ifs.rdbuf();
     program_text = str_buffer.str();
   }

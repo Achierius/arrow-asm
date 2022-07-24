@@ -36,6 +36,6 @@ cc_library(
         "llvm_test.cc",
     ],
     deps = [
-        "@llvm//13.0.0",
+        "//foreign:llvm",
     ],
 )

@@ -50,6 +50,7 @@ enum AstNodeType {
 
 template <AstNodeType node_type> struct AstNode {
   constexpr static AstNodeType type = node_type;
+  
   //std::string_view source_location; // TODO(marcus@)
 };
 

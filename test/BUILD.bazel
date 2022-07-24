@@ -31,6 +31,34 @@ cc_test(
     deps = [
         "@com_github_google_googletest//:gtest",
         "@com_github_google_googletest//:gtest_main",
+        "//src/ast:ast",
         "//src/bytecode:bytecode",
+    ]
+)
+
+cc_test(
+    name = "bytecode_test",
+    srcs = [
+        "bytecode/interpret_test.cc"
+    ],
+    deps = [
+        "@com_github_google_googletest//:gtest",
+        "@com_github_google_googletest//:gtest_main",
+        "//src/bytecode:bytecode",
+    ]
+)
+
+cc_test(
+    name = "grammar_test",
+    srcs = [
+        "parser/grammar_test.cc",
+    ],
+    deps = [
+        "@com_github_google_googletest//:gtest",
+        "@com_github_google_googletest//:gtest_main",
+        "//src/parser:parser",
+    ],
+    data = [
+        "test_programs/simple.aasm",
     ],
 )

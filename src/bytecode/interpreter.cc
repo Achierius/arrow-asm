@@ -106,7 +106,12 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&MulFloat,
     &&DivFloat,
     /********** 0x20 **********/
-    EMPTY_OPCODES_16(),
+    &&LogicalNot,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_4(),
+    EMPTY_OPCODES_8(),
     /********** 0x30 **********/
     EMPTY_OPCODES_16(),
     /********** 0x40 **********/
@@ -363,6 +368,10 @@ LogicalOrLong: {
 }
 UnaryNegate: {
   Push(-Pop());
+  DISPATCH();
+}
+LogicalNot: {
+  Push(~Pop() & 1);
   DISPATCH();
 }
 AddFloat: {

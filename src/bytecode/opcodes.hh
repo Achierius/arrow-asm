@@ -28,6 +28,9 @@ enum Opcode {
   kMulFloat = 0x1E,
   kDivFloat = 0x1F,
 
+  // Logical not
+  kLogicalNot = 0x20,
+
   // Loading/storing
   kImmByte = 0x40,
   kConstant = 0x41,
@@ -46,8 +49,8 @@ enum Opcode {
   kDrop = 0x64,
 
   // Control flow
-  kJump = 0x70, // jumps to pc + 1 + IMM
-  kTestAndJump = 0x71, // pops TOS, jumps to pc + 1 + IMM iff TOS != 0
+  kJump = 0x70, // jumps to pc + IMM
+  kTestAndJump = 0x71, // pops TOS, jumps to pc + IMM iff TOS != 0
   kCall = 0x72,
   kReturn = 0x73,
 

@@ -199,7 +199,7 @@ void EmitIf(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& ch
     // First, we handle our if condition
     EmitArg(chunk, ctx, *condition);
     Emit(chunk, bytecode::Instruction{
-      .opcode = bytecode::kUnaryNegate,
+      .opcode = bytecode::kLogicalNot,
       .param = 0
     });
     // We need to negate so that TestAndJump jumps us if we do NOT match

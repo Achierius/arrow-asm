@@ -1,4 +1,9 @@
 fn main {
-  print 5
+  add l0, 0, 1
+  if l0 {
+    print 5
+  } else {
+    print l0
+  }
   trap
 }

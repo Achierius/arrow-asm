@@ -111,12 +111,42 @@ void Codegen::emitFunction(Function *f, BytecodeChunk &chunk, Address &address) 
             break;
         case kAddLong: {
             auto [a, b] = popTwo(stack);
-            stack.push_back(builder->CreateAdd(a, b, ""));
+            stack.push_back(builder->CreateAdd(a, b));
+            break;
+        }
+        case kSubLong: {
+            auto [a, b] = popTwo(stack);
+            stack.push_back(builder->CreateSub(a, b));
             break;
         }
         case kMulLong: {
             auto [a, b] = popTwo(stack);
-            stack.push_back(builder->CreateMul(a, b, ""));
+            stack.push_back(builder->CreateMul(a, b));
+            break;
+        }
+        case kIDivLong: {
+            auto [a, b] = popTwo(stack);
+            stack.push_back(builder->CreateSDiv(a, b));
+            break;
+        }
+        case kModuloLong: {
+            auto [a, b] = popTwo(stack);
+            stack.push_back(builder->CreateSRem(a, b));
+            break;
+        }
+        case kLeftShiftLong: {
+            auto [a, b] = popTwo(stack);
+            stack.push_back(builder->CreateShl(a, b));
+            break;
+        }
+        case kRightShiftLogicalLong: {
+            auto [a, b] = popTwo(stack);
+            stack.push_back(builder->CreateLShr(a, b));
+            break;
+        }
+        case kRightShiftArithmeticLong: {
+            auto [a, b] = popTwo(stack);
+            stack.push_back(builder->CreateAShr(a, b));
             break;
         }
         case kImmByte: {

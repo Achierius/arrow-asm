@@ -15,9 +15,15 @@ BytecodeExecutable makeFlatBinary( std::vector<Instruction> code) {
   };
   return BytecodeExecutable {
     .chunks {
+      BytecodeChunk { 
+        .code = {
+          { kReturn }
+        } 
+      },
       chunk,
     },
     .chunk_locations {
+      0ull,
       0ull,
     },
   };

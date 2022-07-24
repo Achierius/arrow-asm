@@ -15,7 +15,10 @@ BytecodeExecutable makeFlatBinary( std::vector<Instruction> code) {
   };
   return BytecodeExecutable {
     .chunks {
-      std::make_pair(chunk, 0)
+      chunk,
+    },
+    .chunk_locations {
+      0ull,
     },
   };
 }
@@ -28,6 +31,23 @@ TEST(Bytecode, BasicTest) {
   });
   int return_value = InterpretBytecode(bin);
   EXPECT_EQ(return_value, 0);
+}
+
+TEST(Bytecode, ConstantTestBasic) {
+  spdlog::cfg::load_env_levels();
+  auto bin = makeFlatBinary( {
+      { kConstant, 1 },
+      { kBiasConstantWindow, 2 },
+      { kConstant, 0 },
+      { kAddLong },
+      { kReturn },
+  });
+  bin.chunks[0].constants.push_back(1);
+  bin.chunks[0].constants.push_back(10);
+  bin.chunks[0].constants.push_back(100);
+  bin.chunks[0].constants.push_back(1000);
+  int return_value = InterpretBytecode(bin);
+  EXPECT_EQ(return_value, 110);
 }
 
 }

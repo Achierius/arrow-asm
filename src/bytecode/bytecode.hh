@@ -21,7 +21,7 @@ struct Instruction {
 // both a .text and a .data component.
 struct BytecodeChunk {
   std::vector<Instruction> code;
-  std::vector<Value> constant_pool; // necessary bc we want fixed-length instrs
+  std::vector<Value> constants; // necessary bc we want fixed-length instrs
   std::vector<std::string> symbol_pool;
   // TODO will this need symbols, or can those just be held in the
   // BytecodeExecutable (and thus gathered there directly from the file)?
@@ -37,7 +37,8 @@ using Symbol = std::variant<std::monostate, Address>;
 // TODO this should be rebundled as a class w/ invariants
 struct BytecodeExecutable {
   // Addr start_pc; // TODO do we even need to support diff start addresses?
-  std::vector<std::pair<BytecodeChunk, Address>> chunks;
+  std::vector<BytecodeChunk> chunks;
+  std::vector<Address> chunk_locations;
   std::vector<Value> globals;
 
   // My broad idea is that a '.o-equivalent' BytecodeExecutable would have a

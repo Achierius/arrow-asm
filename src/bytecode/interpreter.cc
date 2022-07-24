@@ -14,14 +14,14 @@
 
 #define DISPATCH_NO_INCR_PC()                                    \
   do {                                                           \
-  instr = chunks[chunk_ptr].first.code[instruction_ptr];         \
+  instr = chunks[chunk_idx].code[pc];         \
   debug_dispatch_hook();                                         \
   goto *(opcode_dispatch_table[static_cast<int>(instr.opcode)]); \
   } while (false);                                               \
 
 #define DISPATCH()      \
   do {                  \
-  instruction_ptr++;    \
+  pc++;    \
   DISPATCH_NO_INCR_PC() \
   } while (false);      \
 
@@ -79,8 +79,9 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   auto& chunks = executable.chunks;
   assert(chunks.size() == 1);
 
+  auto& symtab = executable.symbol_table;
   // also don't support symbols yet TODO
-  assert(executable.symbol_table.size() == 0);
+  assert(symtab.size() == 0);
 
   std::array<void*, 256> opcode_dispatch_table = {
     /********** 0x00 **********/
@@ -113,6 +114,8 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     EMPTY_OPCODES_16(),
     /********** 0x40 **********/
     &&ImmByte,
+    &&Constant,
+    &&BiasConstantWindow,
     EMPTY_OPCODE,
     EMPTY_OPCODE,
     EMPTY_OPCODE,
@@ -144,16 +147,17 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   };
 
   // set up virtual machine state
-  int chunk_ptr = 0;       // current executing chunk
+  int chunk_idx = 0;       // current executing chunk ID
   int cycle_count = 0;     // how many instructions we've executed
-  int instruction_ptr = 0; // within chunk
+  int pc = 0; // within chunk
+  int constant_window_base = 0; // within current chunk
   std::stack<Value> stack;
   Instruction instr;
 
   // debug-only hook that gets called every time we dispatch to let us log stuff
   auto debug_dispatch_hook = [&](){
-    spdlog::debug("{:0>6} {:0>8} {:0>16x}: {} {}", cycle_count, chunk_ptr,
-                  instruction_ptr, instr.opcode, instr.param);
+    spdlog::debug("{:0>6} {:0>8} {:0>16x}: {} {}", cycle_count, chunk_idx,
+                  pc, instr.opcode, instr.param);
     cycle_count++;
   };
 
@@ -161,7 +165,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
 
 BadOpcode:
   // TODO spdlog this
-  spdlog::critical("bad opcode at {:0>8}:{:0>16x}", chunk_ptr, instruction_ptr);
+  spdlog::critical("bad opcode at {:0>8}:{:0>16x}", chunk_idx, pc);
   std::abort();
 Trap:
   spdlog::critical("user code trap");
@@ -228,12 +232,21 @@ RightShiftArithmeticLong: {
   DISPATCH();
 }
 ImmByte:
-  stack.push(static_cast<int8_t>(instr.param));
+  Push(static_cast<int8_t>(instr.param));
   DISPATCH();
-Dup: {
-  Value val_1 = stack.top();
-  stack.push(val_1);
+Constant: {
+  int index = constant_window_base + static_cast<int8_t>(instr.param);
+  Value val = chunks[chunk_idx].constants.at(index);
+  Push(val);
+  DISPATCH();
 }
+BiasConstantWindow: {
+  constant_window_base += static_cast<int8_t>(instr.param);
+  DISPATCH();
+}
+Dup:
+  Push(Peek());
+  DISPATCH();
 Rot2: {
   Value tos {Pop()};
   Value tos1 {Pop()};

@@ -218,7 +218,6 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   DISPATCH_NO_INCR_PC(); // kick it off and it'll drive itself
 
 BadOpcode:
-  // TODO spdlog this
   spdlog::critical("bad opcode at {:0>8}:{:0>16x}", chunk_idx, pc * 2);
   std::abort();
 Trap:
@@ -409,7 +408,7 @@ TestAndJump: {
 Call: {
   return_stack.push({.pc = pc, .chunk_idx = chunk_idx, .constant_window_base = constant_window_base, .global_window_base = global_window_base});
   pc = 0;
-  chunk_idx = Pop();
+  chunk_idx = instr.param;
   constant_window_base = 0;
   global_window_base = 0;
   for (int i = 0; i < 48; i++) { // better way to do this??

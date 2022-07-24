@@ -355,15 +355,28 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
     });
     // TODO: Properly handle type assignment
     ctx.reg_types[dst] = ast::LongNode();
+  } else if (std::holds_alternative<ast::CallNode>(instr)) {
+    auto const& call = std::get<ast::CallNode>(instr);
+    auto itr = exe.symbol_table.find(call.id.id);
+    if (itr == exe.symbol_table.end()) {
+      // TODO: ERROR (identifier could not be found)
+    } else {
+      if (std::holds_alternative<bytecode::ChunkId>(itr->second)) {
+        auto chunkId = std::get<bytecode::ChunkId>(itr->second).idx;
+        Emit(chunk, bytecode::Instruction{
+          .opcode = bytecode::Opcode::kCall,
+          .param = static_cast<int8_t>(chunkId)
+        });
+      } else {
+        // TODO: ERROR (Identifier is not a function)
+      }
+    }
   } else {
     // TODO: ERROR (Unsupported instruction)
   }
 }
 
 bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
-  // TODO: Need to perform a pass over the statements first to get a function list
-  // so that we can resolve calls (and also dependent types?)
-
   bytecode::BytecodeExecutable exe{};
   // Set up empty return chunk
   exe.chunks.push_back(bytecode::BytecodeChunk{

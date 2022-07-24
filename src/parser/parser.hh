@@ -2,8 +2,8 @@
 
 // headers defined in sibling nodes need to be fully-qualified from project root
 #include "src/ast/ast.hh"
-#include "src/parser/BeautifulAsmLexer.h"
-#include "src/parser/BeautifulAsmParser.h"
+#include "src/parser/AasmLexer.h"
+#include "src/parser/AasmParser.h"
 #include <string>
 
 namespace parser {

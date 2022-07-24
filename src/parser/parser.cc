@@ -5,14 +5,13 @@
 #include "src/ast/ast.hh"
 #include "src/parser/ast_builder_visitor.hh"
 
-
 ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
   std::stringstream stream(program_text);
 
   antlr4::ANTLRInputStream input(stream);
-  parser::BeautifulAsmLexer lexer(&input);
+  parser::AasmLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
-  parser::BeautifulAsmParser parser(&tokens);
+  parser::AasmParser parser(&tokens);
 
   auto program = parser.program();
   ASTBuilderVisitor visitor;

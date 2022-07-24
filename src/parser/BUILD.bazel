@@ -13,13 +13,13 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//src/ast:ast",
-        ":BeautifulAsm_cc_parser",
-        ":BeautifulAsm_grammar",
+        ":Aasm_cc_parser",
+        ":Aasm_grammar",
     ],
 )
 
 antlr_cc_library(
-    name = "BeautifulAsm",
-    src = "BeautifulAsm.g4",
+    name = "Aasm",
+    src = "Aasm.g4",
     package = "parser",
 )

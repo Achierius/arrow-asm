@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include <string_view>
-#include <variant>
-#include <vector>
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
 
 namespace ast {
 
@@ -52,8 +52,8 @@ enum AstNodeType {
 
 template <AstNodeType node_type> struct AstNode {
   constexpr static AstNodeType type = node_type;
-  
-  //std::string_view source_location; // TODO(marcus@)
+  //
+  // std::string_view source_location; // TODO(marcus@)
 };
 
 struct NopNode : public AstNode<kNop> {};
@@ -64,41 +64,34 @@ struct IdNode : public AstNode<kId> {
 // Type Nodes
 struct ObjectTypeNode;
 struct LongNode : public AstNode<kLong> {
-  bool operator==(LongNode const&) const {
-    return true;
-  }
+  bool operator==(LongNode const &) const { return true; }
 };
 struct DoubleNode : public AstNode<kDouble> {
-  bool operator==(DoubleNode const&) const {
-    return true;
-  }
+  bool operator==(DoubleNode const &) const { return true; }
 };
 struct PtrNode : public AstNode<kPtr> {
   std::shared_ptr<ObjectTypeNode> element_type;
-  bool operator==(PtrNode const& o) const {
-    return true;
-  }
+  bool operator==(PtrNode const &o) const { return true; }
 };
-struct RegisterTypeNode : public AstNode<kRegisterType>,
-                          public std::variant<std::monostate, LongNode, DoubleNode, PtrNode> {
-  // using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::operator==;
+struct RegisterTypeNode
+    : public AstNode<kRegisterType>,
+      public std::variant<std::monostate, LongNode, DoubleNode, PtrNode> {
+  // using std::variant<std::monostate, LongNode, DoubleNode,
+  // PtrNode>::operator==;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::variant;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::operator=;
 };
 struct ObjectTypeNode : public AstNode<kObjectType>,
-                        public std::variant<std::monostate, LongNode, DoubleNode, PtrNode, IdNode> {
-  using std::variant<std::monostate, LongNode, DoubleNode, PtrNode, IdNode>::variant;
-  using std::variant<std::monostate, LongNode, DoubleNode, PtrNode, IdNode>::operator=;
+                        public std::variant<std::monostate, LongNode,
+                                            DoubleNode, PtrNode, IdNode> {
+  using std::variant<std::monostate, LongNode, DoubleNode, PtrNode,
+                     IdNode>::variant;
+  using std::variant<std::monostate, LongNode, DoubleNode, PtrNode,
+                     IdNode>::operator=;
 };
 
 // Register node
-enum class RegisterCategory {
-  Local,
-  Param,
-  OutgoingParam,
-  Return,
-  Static
-};
+enum class RegisterCategory { Local, Param, OutgoingParam, Return, Static };
 struct RegisterNode : public AstNode<kRegister> {
   // TODO: Add type?
   RegisterCategory category;
@@ -113,7 +106,9 @@ struct MemberNode : public AstNode<kField> {
   IdNode type;
   IdNode field;
 };
-struct ArrowLhsNode : public AstNode<kArrowLhs>, public std::variant<std::monostate, LValueNode, MemberNode> {
+struct ArrowLhsNode
+    : public AstNode<kArrowLhs>,
+      public std::variant<std::monostate, LValueNode, MemberNode> {
   using std::variant<std::monostate, LValueNode, MemberNode>::variant;
   using std::variant<std::monostate, LValueNode, MemberNode>::operator=;
 };
@@ -121,19 +116,25 @@ struct MakeNode : public AstNode<kMake> {
   // We can 'box' all sorts of stuff, including other ptrs or primitives
   ObjectTypeNode type;
 };
-struct ArrowRhsNode : public AstNode<kArrowRhs>, public std::variant<std::monostate, RValueNode, MemberNode, MakeNode> {
+struct ArrowRhsNode
+    : public AstNode<kArrowRhs>,
+      public std::variant<std::monostate, RValueNode, MemberNode, MakeNode> {
   using std::variant<std::monostate, RValueNode, MemberNode, MakeNode>::variant;
-  using std::variant<std::monostate, RValueNode, MemberNode, MakeNode>::operator=;
+  using std::variant<std::monostate, RValueNode, MemberNode,
+                     MakeNode>::operator=;
 };
 struct ArrowInstNode : public AstNode<kArrow> {
   ArrowLhsNode lhs;
   ArrowRhsNode rhs;
 };
-struct ImmediateNode : public AstNode<kImm>, public std::variant<std::monostate, int64_t, double> {
+struct ImmediateNode : public AstNode<kImm>,
+                       public std::variant<std::monostate, int64_t, double> {
   using std::variant<std::monostate, int64_t, double>::variant;
   using std::variant<std::monostate, int64_t, double>::operator=;
 };
-struct ArgNode : public AstNode<kArg>, public std::variant<std::monostate, RValueNode, ImmediateNode> {
+struct ArgNode
+    : public AstNode<kArg>,
+      public std::variant<std::monostate, RValueNode, ImmediateNode> {
   using std::variant<std::monostate, RValueNode, ImmediateNode>::variant;
   using std::variant<std::monostate, RValueNode, ImmediateNode>::operator=;
 };
@@ -194,10 +195,7 @@ struct BinaryNode : public AstNode<kBinaryInst> {
   BinaryOperator op;
 };
 // MemoryNode
-enum class MemoryOperator {
-  kLoad,
-  kStore
-};
+enum class MemoryOperator { kLoad, kStore };
 struct MemoryNode : public AstNode<kMemoryInst> {
   LValueNode register_dst;
   std::variant<std::monostate, RValueNode, MemberNode> memory_location;
@@ -224,11 +222,17 @@ struct WhileNode : public AstNode<kWhileLoop> {
   std::vector<std::shared_ptr<InstructionNode>> body;
 };
 
-struct InstructionNode : public AstNode<kInstruction>,
-                         public std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode,
-                                             UnaryNode, BinaryNode, MemoryNode, IfNode, WhileNode> {
-  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode, WhileNode>::variant;
-  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode, WhileNode>::operator=;
+struct InstructionNode
+    : public AstNode<kInstruction>,
+      public std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode,
+                          NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode,
+                          WhileNode> {
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode,
+                     NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode,
+                     WhileNode>::variant;
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode,
+                     NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode,
+                     WhileNode>::operator=;
 };
 
 // Function nodes
@@ -257,10 +261,12 @@ struct TypeNode : public AstNode<kFunction> {
   std::vector<std::shared_ptr<FieldNode>> fields;
 };
 
-struct StatementNode : public AstNode<kStatement>,
-                       public std::variant<std::monostate, NopNode, FunctionNode, TypeNode> {
+struct StatementNode
+    : public AstNode<kStatement>,
+      public std::variant<std::monostate, NopNode, FunctionNode, TypeNode> {
   using std::variant<std::monostate, NopNode, FunctionNode, TypeNode>::variant;
-  using std::variant<std::monostate, NopNode, FunctionNode, TypeNode>::operator=;
+  using std::variant<std::monostate, NopNode, FunctionNode, TypeNode>::operator=
+      ;
 };
 
 struct ProgramNode : public AstNode<kProgram> {

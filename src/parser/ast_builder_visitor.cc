@@ -85,7 +85,9 @@ namespace parser {
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::ArrowInstNode>(visitChildren(ctx)));
     if (ctx->no_arg_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::NoArgNode>(visitChildren(ctx)));
-    return nullptr;
+    if (ctx->if_statement())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::IfNode>(visitChildren(ctx)));
+    return {};
   }
   
   std::any ASTBuilderVisitor::visitNo_arg_instruction(BeautifulAsmParser::No_arg_instructionContext *ctx) {
@@ -246,6 +248,32 @@ namespace parser {
       .id = ast::IdNode{ .id = ctx->ID()->getText() },
       .type{std::any_cast<ast::RegisterTypeNode>(visitRegister_type(ctx->register_type()))}
     };
+  }
+
+  std::any ASTBuilderVisitor::visitIf_statement(BeautifulAsmParser::If_statementContext *ctx) {
+    ast::IfNode node;
+    node.condition = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->any_argument()));
+    node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
+    for (auto elif_branch : ctx->elif_branch()) {
+      node.elifs.push_back(std::any_cast<ast::ElifNode>(visitElif_branch(elif_branch)));
+    }
+    if (ctx->else_branch()) {
+      node.else_node = std::any_cast<ast::ElseNode>(visitElse_branch(ctx->else_branch()));
+    }
+    return node;
+  }
+
+  std::any ASTBuilderVisitor::visitElif_branch(BeautifulAsmParser::Elif_branchContext *ctx) {
+    ast::ElifNode node;
+    node.condition = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->any_argument()));
+    node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
+    return node;
+  }
+
+  std::any ASTBuilderVisitor::visitElse_branch(BeautifulAsmParser::Else_branchContext *ctx) {
+    ast::ElseNode node;
+    node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
+    return node;
   }
 
 }

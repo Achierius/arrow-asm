@@ -4,8 +4,8 @@
 
 #include "src/ast/ast.hh"
 
-ast::ProgramNode parser::ParseFullProgram(std::string_view program_text) {
-  std::stringstream stream(program_text;
+ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
+  std::stringstream stream(program_text);
 
   antlr4::ANTLRInputStream input(stream);
   parser::BeautifulAsmLexer lexer(&input);

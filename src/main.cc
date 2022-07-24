@@ -15,6 +15,8 @@
 #include "parser/parser.hh"
 #include "bytecode/bytecode.hh"
 #include "bytecode/interpreter.hh"
+#include "spdlog/spdlog.h"
+#include "spdlog/cfg/env.h"
 
 int main(int argc, char *argv[]) {
   // load the file passed in by the first argument as our input program

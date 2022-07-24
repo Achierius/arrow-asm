@@ -15,7 +15,7 @@ int main() {
         { kReturn, 0 }
     };
     BytecodeExecutable exec;
-    exec.chunks = {{chunk, 0}};
+    exec.chunks = {chunk};
     
     Generate(exec, "test.o");
 }

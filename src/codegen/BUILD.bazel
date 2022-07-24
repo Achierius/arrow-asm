@@ -5,7 +5,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//src/bytecode:bytecode",
-        "@llvm//13.0.0",
+        "//foreign:llvm",
         "@com_github_gabime_spdlog//:spdlog",
     ],
 )

@@ -3,7 +3,10 @@ load("@com_github_google_cel-cpp//bazel:antlr.bzl", "antlr_cc_library")
 cc_library(
     name = "parser",
     hdrs = ["parser.hh"],
-    srcs = ["parser.cc"],
+    srcs = [
+        "parser.cc",
+        "parse_tree_visitor.cc",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//src/ast:ast",

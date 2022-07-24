@@ -10,12 +10,8 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
   // TODO actually recurse over ast
   assert(ast.statements.size() == 1);
   // assert(std::holds_alternative<ast::NopNode>(ast.statements[0]));
-  bytecode::Instruction nop {
-    .opcode = bytecode::Opcode::kNop,
-    .param = 0,
-  };
   bytecode::BytecodeChunk chunk {
-    .code = {nop},
+    .code = {{bytecode::Opcode::kNop}, {bytecode::Opcode::kExit}},
   };
   bytecode::BytecodeExecutable exe {
     .chunks = {chunk},

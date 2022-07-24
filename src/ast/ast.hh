@@ -62,14 +62,25 @@ struct IdNode : public AstNode<kId> {
 
 // Type Nodes
 struct ObjectTypeNode;
-struct LongNode : public AstNode<kLong> {};
-struct DoubleNode : public AstNode<kDouble> {};
+struct LongNode : public AstNode<kLong> {
+  bool operator==(LongNode const&) const {
+    return true;
+  }
+};
+struct DoubleNode : public AstNode<kDouble> {
+  bool operator==(DoubleNode const&) const {
+    return true;
+  }
+};
 struct PtrNode : public AstNode<kPtr> {
   std::shared_ptr<ObjectTypeNode> element_type;
-  // std::variant<LongNode, DoubleNode, std::shared_ptr<PtrNode>> element_type;
+  bool operator==(PtrNode const& o) const {
+    return true;
+  }
 };
 struct RegisterTypeNode : public AstNode<kRegisterType>,
                           public std::variant<std::monostate, LongNode, DoubleNode, PtrNode> {
+  // using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::operator==;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::variant;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::operator=;
 };

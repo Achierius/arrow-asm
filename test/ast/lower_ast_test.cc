@@ -9,6 +9,7 @@
 #include "src/ast/ast.hh"
 #include "src/ast/bytecode_emitter.hh"
 #include "src/bytecode/bytecode.hh"
+#include "spdlog/spdlog.h"
 
 namespace {
 
@@ -19,12 +20,24 @@ TEST(LowerAstTest, NopTest) {
   ss << stream.rdbuf();
 
   // Expected Instructions
-  std::vector<bytecode::Instruction> instructions {{
-    { bytecode::Opcode::kNop, 0 },
-  }};
+  std::vector<bytecode::Instruction> instructions {
+    { bytecode::Opcode::kLoadAuxiliary, 32 },
+    { bytecode::Opcode::kDup, 0 },
+    { bytecode::Opcode::kAddLong, 0 },
+    { bytecode::Opcode::kStoreAuxiliary, 32 }
+  };
 
   auto program = parser::ParseFullProgram(ss.str());
   auto executable = ast::LowerAst(program);
+  for (auto const& c : executable.chunks) {
+    spdlog::info("Logging chunk...");
+    for (auto const cons : c.constants) {
+      spdlog::info("Constant: {}", cons);
+    }
+    for (auto const& inst : c.code) {
+      spdlog::info("Inst: {}, {}", inst.opcode, inst.param);
+    }
+  }
 }
 
 }

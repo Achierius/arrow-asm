@@ -7,6 +7,7 @@
 #include <array>
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <vector>
 
@@ -190,9 +191,9 @@ void EmitArg(bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::ArgNode 
   ctx.assign_top(arg);
 }
 
-void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst);
+void HandleInstruction(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst);
 
-void EmitIf(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx,
+void EmitIf(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx,
             std::vector<std::shared_ptr<ast::InstructionNode>> const& body, std::optional<ast::ArgNode> condition,
             std::vector<int>& lasts, std::vector<FuncInstContext>& contexts) {
   int first;
@@ -236,8 +237,21 @@ void EmitIf(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& ch
   }
 }
 
+std::string symb_name(ast::ObjectTypeNode const& o) {
+  if (std::holds_alternative<ast::LongNode>(o)) {
+    return "long";
+  } else if (std::holds_alternative<ast::DoubleNode>(o)) {
+    return "double";
+  } else if (std::holds_alternative<ast::PtrNode>(o)) {
+    auto const& ptr = std::get<ast::PtrNode>(o);
+    return "ptr<" + symb_name(*ptr.element_type) + ">";
+  } else {
+    return "";
+  }
+}
+
 // TODO: Return bool?
-void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst) {
+void HandleInstruction(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst) {
   auto const& instr = inst;
   // ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode
   if (std::holds_alternative<ast::IfNode>(instr)) {
@@ -439,7 +453,98 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
         }
       }
     } else if (std::holds_alternative<ast::MakeNode>(arrow.rhs)) {
-      // TODO: Perform a Make!
+      auto const& make = std::get<ast::MakeNode>(arrow.rhs);
+      auto const& type = make.type;
+      if (std::holds_alternative<ast::IdNode>(type)) {
+        auto const& id = std::get<ast::IdNode>(type);
+        auto itr = exe.symbol_table.find(id.id);
+        if (itr == exe.symbol_table.end()) {
+          // TODO: ERROR (type symbol not found)
+        } else {
+          if (std::holds_alternative<bytecode::ClassId>(itr->second)) {
+            auto cid = std::get<bytecode::ClassId>(itr->second).idx;
+            // Flow:
+            auto const& klass = exe.classes[cid];
+            auto sz = (klass.fields.size() + 1) * sizeof(bytecode::Value);
+            // 1. Allocate
+            // TODO: Emit this only when safe to do so (ex, sz < 128)
+            Emit(chunk, bytecode::Instruction{
+              .opcode = bytecode::Opcode::kAllocateImm,
+              .param = static_cast<int8_t>(sz)
+            });
+            Emit(chunk, bytecode::Instruction{
+              .opcode = bytecode::Opcode::kStoreAuxiliary,
+              .param = TranslateRegister(ast::RegisterNode{
+                .category = ast::RegisterCategory::OutgoingParam,
+                .register_id = 0
+              })
+            });
+            // 2. Call constructor
+            Emit(chunk, bytecode::Instruction{
+              .opcode = bytecode::Opcode::kCall,
+              .param = static_cast<int8_t>(klass.ctor_chunk.idx)
+            });
+            // 3. Have pointer on stack
+            Emit(chunk, bytecode::Instruction{
+              .opcode = bytecode::Opcode::kMoveAuxiliary,
+              .param = TranslateRegister(ast::RegisterNode{
+                .category = ast::RegisterCategory::OutgoingParam,
+                .register_id = 0
+              })
+            });
+          } else {
+            // TODO: ERROR (symbol is not a type)
+          }
+        }
+      } else {
+        std::string symb = symb_name(type);
+
+        // TODO: Handle boxing types.
+        // This is actually pretty complex because a boxed type should have a
+        // class index that is not in use.
+        // We can do this by just making it on the spot--
+        // We can also abuse the symbol table a little and put these boxed
+        // types in there as well
+        auto itr = exe.symbol_table.find(symb);
+        int cid;
+        if (itr != exe.symbol_table.end()) {
+          // Use the existing one
+          if (std::holds_alternative<bytecode::ClassId>(itr->second)) {
+            cid = std::get<bytecode::ClassId>(itr->second).idx;
+          } else {
+            // TODO: ERROR (symbol table does not have this primitive! Name collision?)
+          }
+        } else {
+          // We should make a new box class record
+          cid = exe.classes.size();
+          exe.symbol_table.insert({symb, bytecode::ClassId{ .idx = cid }});
+          bytecode::BytecodeExecutable::ClassDataRecord klass{};
+          klass.ctor_chunk = bytecode::ChunkId { .idx = 0 };
+          klass.dtor_chunk = bytecode::ChunkId { .idx = 0 };
+          klass.name = symb;
+          if (std::holds_alternative<ast::LongNode>(type)) {
+            klass.fields.push_back(bytecode::BytecodeExecutable::ValueType::kLong);
+          } else if (std::holds_alternative<ast::DoubleNode>(type)) {
+            klass.fields.push_back(bytecode::BytecodeExecutable::ValueType::kDouble);
+          } else if (std::holds_alternative<ast::PtrNode>(type)) {
+            klass.fields.push_back(bytecode::BytecodeExecutable::ValueType::kDataPtr);
+          } else {
+            // TODO: ERROR (impossible?)
+          }
+          exe.classes.push_back(klass);
+        }
+        // Size of the type is 2 fields (implicit + extra)
+        int8_t sz = 8 * 2;
+        // Allocate
+        Emit(chunk, bytecode::Instruction{
+          .opcode = bytecode::Opcode::kAllocateImm,
+          .param = sz
+        });
+        // Pointer is now on stack, done!
+        // Note: The (implicit) dtor for a boxed pointer does not actually destroy
+        // this is a potential problem.
+        // TODO: See above
+      }
     } else {
       // TODO: ERROR (Unsupported arrow rhs)
     }
@@ -492,6 +597,12 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
   }
 }
 
+static std::unordered_set<std::string> primitives{
+  "long",
+  "double",
+  "ptr"
+};
+
 bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
   bytecode::BytecodeExecutable exe{};
   // Set up empty return chunk
@@ -511,6 +622,9 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
       auto func = std::get<ast::FunctionNode>(*stmt);
       // Functions are 1-to-1 to chunks
       exe.chunk_locations.push_back(chunkId);
+      if (primitives.find(func.id.id) != primitives.end()) {
+        // TODO: ERROR (cannot redefine primitive types!)
+      }
       if (exe.symbol_table.find(func.id.id) != exe.symbol_table.end()) {
         // TODO: ERROR (Duplicate function definition/clash!)
       }
@@ -550,6 +664,9 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
         } else {
           // TODO: ERROR (unknown field type)
         }
+      }
+      if (primitives.find(type.id.id) != primitives.end()) {
+        // TODO: ERROR (cannot redefine primitive types!)
       }
       if (type_method_map.find(type.id.id) != type_method_map.end()) {
         // TODO: ERROR (Duplicate type name!)

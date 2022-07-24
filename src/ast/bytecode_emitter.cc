@@ -274,7 +274,7 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
       for (int i = 0; i < func.params.size(); ++i) {
         ctx.reg_types[TranslateRegister(ast::RegisterNode{
           .category = ast::RegisterCategory::Param,
-          .register_id = static_cast<int8_t>(i)
+          .register_id = static_cast<uint8_t>(i)
         })] = *func.params[i];
       }
       for (auto& inst : func.body) {

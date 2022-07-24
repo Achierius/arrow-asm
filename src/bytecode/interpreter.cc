@@ -145,7 +145,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&LoadClassDestructor,
     &&LoadObjectField,
     &&StoreObjectField,
-    EMPTY_OPCODE,
+    &&LoadObjectDestructor,
     EMPTY_OPCODES_8(),
     /********** 0x90 **********/
     EMPTY_OPCODES_16(),
@@ -412,6 +412,9 @@ Return: {
   constant_window_base = frame.constant_window_base;
   global_window_base = frame.global_window_base;
   for (int i = 0; i < 48; i++) { // better way to do this??
+    // TODO fix destructors
+    // executable.classes[i -???-> [0]].dtor_chunk.idx);???
+    // need type tags in the Value 
     auxiliary_stack.pop_front();
   }
   spdlog::debug("Return => Frame [{:>4}]", chunk_idx);
@@ -425,6 +428,12 @@ LoadClassDestructor: {
   Push(executable.classes.at(instr.param).dtor_chunk.idx);
   DISPATCH();
 }
+LoadObjectDestructor: {
+  intptr_t ptr = Peek();
+  Value* object_frame = reinterpret_cast<Value*>(ptr);
+  Push(executable.classes[object_frame[0]].dtor_chunk.idx);
+  DISPATCH();
+}
 LoadObjectField: {
   int index = instr.param;
   intptr_t ptr = Pop();
@@ -434,7 +443,8 @@ LoadObjectField: {
                      index, reinterpret_cast<void*>(object_frame));
     std::abort();
   }
-  Push(object_frame[index]);
+  // TODO type check
+  Push(object_frame[index + 1]); // + 1 bc slot 0 is the class index
   DISPATCH();
 }
 StoreObjectField: {
@@ -448,7 +458,7 @@ StoreObjectField: {
     std::abort();
   }
   // TODO type check
-  object_frame[index] = val;
+  object_frame[index + 1] = val; // + 1 bc slot 0 is the class index
   DISPATCH();
 }
 Deallocate: {

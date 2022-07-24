@@ -12,7 +12,8 @@ namespace parser {
       virtual std::any visitInstructions(BeautifulAsmParser::InstructionsContext *ctx);
       // virtual std::any visitNo_arg_instruction(BeautifulAsmParser::No_arg_instructionContext *ctx);
       // virtual std::any visitArrow_instruction(BeautifulAsmParser::Arrow_instructionContext *ctx);
-      // virtual std::any visitPrint_instruction(BeautifulAsmParser::Print_instructionContext *ctx);
+      virtual std::any visitCall_instruction(BeautifulAsmParser::Call_instructionContext *ctx);
+      virtual std::any visitPrint_instruction(BeautifulAsmParser::Print_instructionContext *ctx);
       virtual std::any visitBinary_operator_instruction(BeautifulAsmParser::Binary_operator_instructionContext *ctx);
       // virtual std::any visitMemory_instruction(BeautifulAsmParser::Memory_instructionContext *ctx);
       virtual std::any visitBinary_operator(BeautifulAsmParser::Binary_operatorContext *ctx);

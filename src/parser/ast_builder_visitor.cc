@@ -21,7 +21,9 @@ namespace parser {
     if (ctx->parameter_list()) {
       // node->params = std::any_cast<std::vector<std::shared_ptr<ast::ParamNode>>>(visitParameter_list(ctx->parameter_list()));
     }
-    node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
+    if (ctx->instructions()) {
+      node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
+    }
     return ast::StatementNode(node);
   }
 
@@ -38,9 +40,12 @@ namespace parser {
   }
 
   std::any ASTBuilderVisitor::visitInstruction(BeautifulAsmParser::InstructionContext *ctx) {
-    if (ctx->binary_operator_instruction()) {
+    if (ctx->binary_operator_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::BinaryNode>(visitChildren(ctx)));
-    }
+    if (ctx->call_instruction())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::CallNode>(visitChildren(ctx)));
+    if (ctx->print_instruction())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::NoRetNode>(visitChildren(ctx)));
     return nullptr;
   }
   
@@ -50,8 +55,13 @@ namespace parser {
   // std::any ASTBuilderVisitor::visitArrow_instruction(BeautifulAsmParser::Arrow_instructionContext *ctx) {
   // }
 
-  // std::any ASTBuilderVisitor::visitPrint_instruction(BeautifulAsmParser::Print_instructionContext *ctx) {
-  // }
+  std::any ASTBuilderVisitor::visitCall_instruction(BeautifulAsmParser::Call_instructionContext *ctx) {
+    return ast::CallNode{ .id{ ast::IdNode{ .id = ctx->ID()->getText() } } };
+  }
+  
+  std::any ASTBuilderVisitor::visitPrint_instruction(BeautifulAsmParser::Print_instructionContext *ctx) {
+    return ast::NoRetNode{ .op = ast::NoRetOperator::kPrint, .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx)) };
+  }
 
   std::any ASTBuilderVisitor::visitBinary_operator_instruction(BeautifulAsmParser::Binary_operator_instructionContext *ctx) {
     ast::BinaryNode node;
@@ -72,19 +82,33 @@ namespace parser {
   }
 
   std::any ASTBuilderVisitor::visitAny_lvalue(BeautifulAsmParser::Any_lvalueContext *ctx) {
-    return ast::LValueNode();
+    auto text = ctx->getText();
+    ast::LValueNode node;
+    if      (text.starts_with("l"))  { node.category = ast::RegisterCategory::Local;         node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("p"))  { node.category = ast::RegisterCategory::Param;         node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("o"))  { node.category = ast::RegisterCategory::OutgoingParam; node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("rr")) { node.category = ast::RegisterCategory::Return;        node.register_id = std::stoi(text.substr(2)); }
+    else if (text.starts_with("sr")) { node.category = ast::RegisterCategory::Static;        node.register_id = std::stoi(text.substr(2)); }
+    return node;
   }
 
   std::any ASTBuilderVisitor::visitAny_argument(BeautifulAsmParser::Any_argumentContext *ctx) {
     if (ctx->any_rvalue())
       return ast::ArgNode(std::any_cast<ast::RValueNode>(visitAny_rvalue(ctx->any_rvalue())));
     if (ctx->any_number())
-      return ast::ArgNode(std::any_cast<ast::ImmediateNode>(visitAny_rvalue(ctx->any_rvalue())));
-    return 0;
+      return ast::ArgNode(std::any_cast<ast::ImmediateNode>(visitAny_number(ctx->any_number())));
+    return {};
   }
 
   std::any ASTBuilderVisitor::visitAny_rvalue(BeautifulAsmParser::Any_rvalueContext *ctx) {
-    return ast::RValueNode();
+    auto text = ctx->getText();
+    ast::RValueNode node;
+    if      (text.starts_with("l"))  { node.category = ast::RegisterCategory::Local;         node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("p"))  { node.category = ast::RegisterCategory::Param;         node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("o"))  { node.category = ast::RegisterCategory::OutgoingParam; node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("rr")) { node.category = ast::RegisterCategory::Return;        node.register_id = std::stoi(text.substr(2)); }
+    else if (text.starts_with("sr")) { node.category = ast::RegisterCategory::Static;        node.register_id = std::stoi(text.substr(2)); }
+    return node;
   }
 
   std::any ASTBuilderVisitor::visitAny_number(BeautifulAsmParser::Any_numberContext *ctx) {
@@ -92,4 +116,5 @@ namespace parser {
       return ast::ImmediateNode(std::stod(ctx->getText()));
     return ast::ImmediateNode(std::stol(ctx->getText()));
   }
+
 }

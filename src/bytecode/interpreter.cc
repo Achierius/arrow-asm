@@ -76,8 +76,6 @@
 int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   auto& chunks = executable.chunks;
   auto& symtab = executable.symbol_table;
-  // don't support symbols yet TODO
-  assert(symtab.size() == 0);
 
   std::array<void*, 256> opcode_dispatch_table = {
     /********** 0x00 **********/
@@ -165,17 +163,24 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     EMPTY_OPCODES_16(),
   };
 
-  // set up virtual machine state
+  // Set up virtual machine state
+  //  - stacks
+  std::stack<Value> data_stack;
+  std::deque<Value> auxiliary_stack(64); // TODO magic number
+  struct StackFrame {
+    int pc;
+    int chunk_idx;
+    int constant_window_base;
+    int global_window_base;
+  };
+  std::stack<StackFrame> return_stack;
+  Instruction instr;
+  //  - various counters
   int chunk_idx = 0;       // current executing chunk ID
   int cycle_count = 0;     // how many instructions we've executed
   int pc = 0; // within chunk
   int constant_window_base = 0; // within current chunk
   int global_window_base = 0; // within current chunk
-  std::stack<Value> data_stack;
-  std::deque<Value> auxiliary_stack(64); // TODO magic number
-  struct StackFrame { int pc; int chunk_idx; int constant_window_base; int global_window_base; };
-  std::stack<StackFrame> return_stack;
-  Instruction instr;
 
   // debug-only hook that gets called every time we dispatch to let us log stuff
   auto debug_dispatch_hook = [&](){
@@ -400,7 +405,6 @@ Call: {
   DISPATCH_NO_INCR_PC();
 }
 Return: {
-  // TODO
   auto frame = return_stack.top();
   return_stack.pop();
   pc = frame.pc + 1;
@@ -414,19 +418,19 @@ Return: {
   DISPATCH_NO_INCR_PC();
 }
 LoadClassConstructor: {
-  // TODO
-  goto BadOpcode;
+  Push(executable.classes.at(instr.param).ctor_chunk.idx);
+  DISPATCH();
 }
 LoadClassDestructor: {
-  // TODO
-  goto BadOpcode;
+  Push(executable.classes.at(instr.param).dtor_chunk.idx);
+  DISPATCH();
 }
 LoadObjectField: {
-  // TODO
+  // TODO unimplemented
   goto BadOpcode;
 }
 StoreObjectField: {
-  // TODO
+  // TODO unimplemented
   goto BadOpcode;
 }
 Deallocate: {

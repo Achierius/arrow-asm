@@ -2,7 +2,8 @@ cc_binary(
     name = "driver",
     srcs = ["main.cc"],
     deps = [
-        "//src/ast:all",
+        "//src/ast:ast",
+        "//src/ast:bytecode_emitter",
         "//src/parser:parser",
         "//src/bytecode:bytecode",
     ],

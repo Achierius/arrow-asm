@@ -197,6 +197,7 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
         HandleInstruction(chunk, ctx, inst);
       }
       exe.chunks.push_back(chunk);
+      exe.symbol_table[symbol.id] = bytecode::ChunkId{loc};
       exe.chunk_locations.push_back(loc++);
     }
   }

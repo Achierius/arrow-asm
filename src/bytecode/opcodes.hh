@@ -23,6 +23,8 @@ enum Opcode {
 
   // Loading/storing
   kImmByte = 0x40,
+  kConstant = 0x41,
+  kBiasConstantWindow = 0x42,
 
   // Stack manipulation
   kDup = 0x60,

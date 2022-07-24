@@ -18,7 +18,8 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
     .code = {nop},
   };
   bytecode::BytecodeExecutable exe {
-    .chunks = {std::make_pair(chunk, 0ull)},
+    .chunks = {chunk},
+    .chunk_locations = {0ull},
   };
   return exe;
 }

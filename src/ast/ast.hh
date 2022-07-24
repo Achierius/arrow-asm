@@ -63,15 +63,17 @@ struct ObjectTypeNode;
 struct LongNode : public AstNode<kLong> {};
 struct DoubleNode : public AstNode<kDouble> {};
 struct PtrNode : public AstNode<kPtr> {
-  std::unique_ptr<ObjectTypeNode> element_type;
-  // std::variant<LongNode, DoubleNode, std::unique_ptr<PtrNode>> element_type;
+  std::shared_ptr<ObjectTypeNode> element_type;
+  // std::variant<LongNode, DoubleNode, std::shared_ptr<PtrNode>> element_type;
 };
 struct RegisterTypeNode : public AstNode<kRegisterType>,
                           public std::variant<std::monostate, LongNode, DoubleNode, PtrNode> {
+  using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::variant;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::operator=;
 };
 struct ObjectTypeNode : public AstNode<kObjectType>,
                         public std::variant<std::monostate, LongNode, DoubleNode, PtrNode, IdNode> {
+  using std::variant<std::monostate, LongNode, DoubleNode, PtrNode, IdNode>::variant;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode, IdNode>::operator=;
 };
 
@@ -96,6 +98,7 @@ struct FieldNode : public AstNode<kField> {
 struct LValueNode : public AstNode<kLValue>, public RegisterNode {};
 struct RValueNode : public AstNode<kRValue>, public RegisterNode {};
 struct ArrowLhsNode : public AstNode<kArrowLhs>, public std::variant<std::monostate, LValueNode, FieldNode> {
+  using std::variant<std::monostate, LValueNode, FieldNode>::variant;
   using std::variant<std::monostate, LValueNode, FieldNode>::operator=;
 };
 struct MakeNode : public AstNode<kMake> {
@@ -103,6 +106,7 @@ struct MakeNode : public AstNode<kMake> {
   ObjectTypeNode type;
 };
 struct ArrowRhsNode : public AstNode<kArrowRhs>, public std::variant<std::monostate, RValueNode, FieldNode, MakeNode> {
+  using std::variant<std::monostate, RValueNode, FieldNode, MakeNode>::variant;
   using std::variant<std::monostate, RValueNode, FieldNode, MakeNode>::operator=;
 };
 struct ArrowInstNode : public AstNode<kArrow> {
@@ -110,9 +114,11 @@ struct ArrowInstNode : public AstNode<kArrow> {
   ArrowRhsNode rhs;
 };
 struct ImmediateNode : public AstNode<kImm>, public std::variant<std::monostate, int64_t, double> {
+  using std::variant<std::monostate, int64_t, double>::variant;
   using std::variant<std::monostate, int64_t, double>::operator=;
 };
 struct ArgNode : public AstNode<kArg>, public std::variant<std::monostate, RValueNode, ImmediateNode> {
+  using std::variant<std::monostate, RValueNode, ImmediateNode>::variant;
   using std::variant<std::monostate, RValueNode, ImmediateNode>::operator=;
 };
 // Operator/Instruction Nodes
@@ -159,21 +165,22 @@ struct MemoryNode : public AstNode<kMemoryInst> {
 struct InstructionNode;
 struct ElifNode : public AstNode<kElif> {
   ArgNode condition;
-  std::vector<std::unique_ptr<InstructionNode>> body;
+  std::vector<std::shared_ptr<InstructionNode>> body;
 };
 struct ElseNode : public AstNode<kElse> {
-  std::vector<std::unique_ptr<InstructionNode>> body;
+  std::vector<std::shared_ptr<InstructionNode>> body;
 };
 struct IfNode : public AstNode<kIfStmt> {
   ArgNode condition;
   std::vector<ElifNode> elifs;
   std::optional<ElseNode> else_node;
-  std::vector<std::unique_ptr<InstructionNode>> body;
+  std::vector<std::shared_ptr<InstructionNode>> body;
 };
 
 struct InstructionNode : public AstNode<kInstruction>,
                          public std::variant<std::monostate, ArrowInstNode, NoArgNode, NoRetNode,
                                              BinaryNode, MemoryNode, IfNode> {
+  using std::variant<std::monostate, ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::variant;
   using std::variant<std::monostate, ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::operator=;
 };
 
@@ -181,31 +188,32 @@ struct InstructionNode : public AstNode<kInstruction>,
 struct ParamNode : public AstNode<kParam>, public RegisterTypeNode {};
 struct FunctionNode : public AstNode<kFunction> {
   IdNode id;
-  std::vector<std::unique_ptr<ParamNode>> params;
-  std::vector<std::unique_ptr<InstructionNode>> body;
+  std::vector<std::shared_ptr<ParamNode>> params;
+  std::vector<std::shared_ptr<InstructionNode>> body;
 };
 
 // Type definition nodes
 struct CtorNode : public AstNode<kCtor> {
-  std::vector<std::unique_ptr<InstructionNode>> body;
+  std::vector<std::shared_ptr<InstructionNode>> body;
 };
 struct DtorNode : public AstNode<kDtor> {
-  std::vector<std::unique_ptr<InstructionNode>> body;
+  std::vector<std::shared_ptr<InstructionNode>> body;
 };
 struct TypeNode : public AstNode<kFunction> {
   IdNode id;
   std::optional<CtorNode> ctor;
   std::optional<DtorNode> dtor;
-  std::vector<std::unique_ptr<FieldNode>> fields;
+  std::vector<std::shared_ptr<FieldNode>> fields;
 };
 
 struct StatementNode : public AstNode<kStatement>,
                        public std::variant<std::monostate, NopNode, FunctionNode, TypeNode> {
- using std::variant<std::monostate, NopNode, FunctionNode, TypeNode>::operator=;
+  using std::variant<std::monostate, NopNode, FunctionNode, TypeNode>::variant;
+  using std::variant<std::monostate, NopNode, FunctionNode, TypeNode>::operator=;
 };
 
 struct ProgramNode : public AstNode<kProgram> {
-  std::vector<std::unique_ptr<StatementNode>> statements;
+  std::vector<std::shared_ptr<StatementNode>> statements;
 };
 
 } // namespace ast

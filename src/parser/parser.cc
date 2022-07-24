@@ -16,7 +16,7 @@ ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
   // TODO antlr
   if (program_text == "nop\n") {
     ast::ProgramNode program_node {
-      .statements{std::make_unique<ast::NopNode>()},
+      .statements{std::make_shared<ast::StatementNode>(ast::NopNode{})},
     };
     return program_node;
   }

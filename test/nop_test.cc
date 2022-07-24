@@ -11,6 +11,6 @@ TEST(NopTest, NopTest) {
   auto program = parser::ParseFullProgram("nop\n");
   auto executable = ast::LowerAst(program);
   int return_value = bytecode::InterpretBytecode(executable);
-  EXPECT_EQ(return_value, 0);
+  EXPECT_EQ(return_value, 0); // is this actually true though
 }
 }

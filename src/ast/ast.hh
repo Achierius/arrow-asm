@@ -105,23 +105,23 @@ struct RegisterNode : public AstNode<kRegister> {
 };
 
 // Instruction nodes
-struct FieldNode : public AstNode<kField> {
-  IdNode id;
-  RegisterTypeNode type;
-};
 struct LValueNode : public AstNode<kLValue>, public RegisterNode {};
 struct RValueNode : public AstNode<kRValue>, public RegisterNode {};
-struct ArrowLhsNode : public AstNode<kArrowLhs>, public std::variant<std::monostate, LValueNode, FieldNode> {
-  using std::variant<std::monostate, LValueNode, FieldNode>::variant;
-  using std::variant<std::monostate, LValueNode, FieldNode>::operator=;
+struct MemberNode : public AstNode<kField> {
+  RValueNode obj;
+  IdNode field;
+};
+struct ArrowLhsNode : public AstNode<kArrowLhs>, public std::variant<std::monostate, LValueNode, MemberNode> {
+  using std::variant<std::monostate, LValueNode, MemberNode>::variant;
+  using std::variant<std::monostate, LValueNode, MemberNode>::operator=;
 };
 struct MakeNode : public AstNode<kMake> {
   // We can 'box' all sorts of stuff, including other ptrs or primitives
   ObjectTypeNode type;
 };
-struct ArrowRhsNode : public AstNode<kArrowRhs>, public std::variant<std::monostate, RValueNode, FieldNode, MakeNode> {
-  using std::variant<std::monostate, RValueNode, FieldNode, MakeNode>::variant;
-  using std::variant<std::monostate, RValueNode, FieldNode, MakeNode>::operator=;
+struct ArrowRhsNode : public AstNode<kArrowRhs>, public std::variant<std::monostate, RValueNode, MemberNode, MakeNode> {
+  using std::variant<std::monostate, RValueNode, MemberNode, MakeNode>::variant;
+  using std::variant<std::monostate, RValueNode, MemberNode, MakeNode>::operator=;
 };
 struct ArrowInstNode : public AstNode<kArrow> {
   ArrowLhsNode lhs;
@@ -176,7 +176,7 @@ enum class MemoryOperator {
 };
 struct MemoryNode : public AstNode<kMemoryInst> {
   LValueNode register_dst;
-  std::variant<std::monostate, RValueNode, FieldNode> memory_location;
+  std::variant<std::monostate, RValueNode, MemberNode> memory_location;
   MemoryOperator op;
 };
 // IfNode
@@ -211,6 +211,10 @@ struct FunctionNode : public AstNode<kFunction> {
 };
 
 // Type definition nodes
+struct FieldNode : public AstNode<kField> {
+  IdNode id;
+  RegisterTypeNode type;
+};
 struct CtorNode : public AstNode<kCtor> {
   std::vector<std::shared_ptr<InstructionNode>> body;
 };

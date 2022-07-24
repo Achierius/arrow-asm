@@ -46,15 +46,46 @@ namespace parser {
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::CallNode>(visitChildren(ctx)));
     if (ctx->print_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::NoRetNode>(visitChildren(ctx)));
+    if (ctx->memory_instruction())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::MemoryNode>(visitChildren(ctx)));
+    if (ctx->arrow_instruction())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::ArrowInstNode>(visitChildren(ctx)));
     return nullptr;
   }
   
-  // std::any ASTBuilderVisitor::visitNo_arg_instruction(BeautifulAsmParser::No_arg_instructionContext *ctx) {
-  // }
+  std::any ASTBuilderVisitor::visitNo_arg_instruction(BeautifulAsmParser::No_arg_instructionContext *ctx) {
 
-  // std::any ASTBuilderVisitor::visitArrow_instruction(BeautifulAsmParser::Arrow_instructionContext *ctx) {
-  // }
+  }
 
+  std::any ASTBuilderVisitor::visitArrow_instruction(BeautifulAsmParser::Arrow_instructionContext *ctx) {
+    ast::ArrowInstNode node;
+    node.lhs = std::any_cast<ast::ArrowLhsNode>(visitArrow_lhs(ctx->arrow_lhs()));
+    node.rhs = std::any_cast<ast::ArrowRhsNode>(visitArrow_rhs(ctx->arrow_rhs()));
+    return node; 
+  }
+  
+  std::any ASTBuilderVisitor::visitArrow_lhs(BeautifulAsmParser::Arrow_lhsContext *ctx) {
+    if (ctx->any_field())
+      return ast::ArrowLhsNode{std::any_cast<ast::MemberNode>(visitChildren(ctx))};
+    if (ctx->any_lvalue())
+      return ast::ArrowLhsNode{std::any_cast<ast::LValueNode>(visitChildren(ctx))};
+    return {};
+  }
+    
+  std::any ASTBuilderVisitor::visitArrow_rhs(BeautifulAsmParser::Arrow_rhsContext *ctx) {
+    if (ctx->any_field())
+      return ast::ArrowRhsNode{std::any_cast<ast::MemberNode>(visitChildren(ctx))};
+    if (ctx->any_rvalue())
+      return ast::ArrowRhsNode{std::any_cast<ast::RValueNode>(visitChildren(ctx))};
+    if (ctx->make_constructor())
+      return ast::ArrowRhsNode{std::any_cast<ast::MakeNode>(visitChildren(ctx))};
+    return {};
+  }
+
+  std::any ASTBuilderVisitor::visitMake_constructor(BeautifulAsmParser::Make_constructorContext *ctx) {
+    return ast::MakeNode{ .type{std::any_cast<ast::ObjectTypeNode>(visitChildren(ctx))} };
+  }
+    
   std::any ASTBuilderVisitor::visitCall_instruction(BeautifulAsmParser::Call_instructionContext *ctx) {
     return ast::CallNode{ .id{ ast::IdNode{ .id = ctx->ID()->getText() } } };
   }
@@ -72,13 +103,32 @@ namespace parser {
     return node;
   }
 
-  // std::any ASTBuilderVisitor::visitMemory_instruction(BeautifulAsmParser::Memory_instructionContext *ctx) {
-  // }
+  std::any ASTBuilderVisitor::visitMemory_instruction(BeautifulAsmParser::Memory_instructionContext *ctx) {
+    ast::MemoryNode node;
+    node.op = std::any_cast<ast::MemoryOperator>(visitMemory_operator(ctx->memory_operator()));
+    node.register_dst = std::any_cast<ast::LValueNode>(visitAny_lvalue(ctx->arg1));
+    node.memory_location = std::any_cast<std::variant<std::monostate, ast::RValueNode, ast::MemberNode>>(visitMemory_destination(ctx->arg2));
+    return node;
+  }
 
   std::any ASTBuilderVisitor::visitBinary_operator(BeautifulAsmParser::Binary_operatorContext *ctx) {
     if (ctx->getText() == "add") return ast::BinaryOperator::kAdd;
     if (ctx->getText() == "mul") return ast::BinaryOperator::kMul;
-    return ast::BinaryOperator::kAdd; // unreachable
+    return {};
+  }
+
+  std::any ASTBuilderVisitor::visitMemory_operator(BeautifulAsmParser::Memory_operatorContext *ctx) {
+    if (ctx->getText() == "load")  return ast::MemoryOperator::kLoad;
+    if (ctx->getText() == "store") return ast::MemoryOperator::kStore;
+    return {};
+  }
+    
+  std::any ASTBuilderVisitor::visitMemory_destination(BeautifulAsmParser::Memory_destinationContext *ctx) {
+    if (ctx->any_field())
+      return std::variant<std::monostate, ast::RValueNode, ast::MemberNode>{std::any_cast<ast::MemberNode>(visitChildren(ctx))};
+    if (ctx->any_rvalue())
+      return std::variant<std::monostate, ast::RValueNode, ast::MemberNode>{std::any_cast<ast::RValueNode>(visitChildren(ctx))};
+    return {};
   }
 
   std::any ASTBuilderVisitor::visitAny_lvalue(BeautifulAsmParser::Any_lvalueContext *ctx) {
@@ -115,6 +165,16 @@ namespace parser {
     if (ctx->getText().find('.'))
       return ast::ImmediateNode(std::stod(ctx->getText()));
     return ast::ImmediateNode(std::stol(ctx->getText()));
+  }
+
+  std::any ASTBuilderVisitor::visitAny_field(BeautifulAsmParser::Any_fieldContext *ctx) {
+    return ast::MemberNode{ .obj{std::any_cast<ast::RValueNode>(visitAny_rvalue(ctx->any_rvalue()))}, .field{ast::IdNode{.id = ctx->ID()->getText()}} };
+  }
+
+  std::any ASTBuilderVisitor::visitObject_type(BeautifulAsmParser::Object_typeContext *ctx) {
+    if (ctx->ID())
+      return ast::ObjectTypeNode{ ast::IdNode{ .id = ctx->ID()->getText() } };
+    return {};
   }
 
 }

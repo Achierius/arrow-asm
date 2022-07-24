@@ -5,6 +5,7 @@
 #include <deque>
 #include <stack>
 #include <iostream>
+#include <unordered_set>
 
 #include "spdlog/spdlog.h"
 #include "spdlog/cfg/env.h"
@@ -123,7 +124,11 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&BiasGlobalWindow,
     &&StoreAuxiliary,
     &&LoadAuxiliary,
-    EMPTY_OPCODES_8(),
+    &&MoveAuxiliary,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_4(),
     /********** 0x50 **********/
     EMPTY_OPCODES_16(),
     /********** 0x60 **********/
@@ -151,7 +156,11 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&LoadObjectField,
     &&StoreObjectField,
     &&LoadObjectDestructor,
-    EMPTY_OPCODES_8(),
+    &&MoveOutObjectField,
+    &&Destroy,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_4(),
     /********** 0x90 **********/
     EMPTY_OPCODES_16(),
     /********** 0xA0 **********/
@@ -179,6 +188,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     int global_window_base;
   };
   std::stack<StackFrame> return_stack;
+  std::unordered_set<Value> pointers;
   Instruction instr;
   //  - various counters
   int chunk_idx = 1;       // current executing chunk ID. We start at 1, 0 is our implicit empty chunk
@@ -203,6 +213,15 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     cycle_count++;
   };
 
+  auto is_pointer = [&pointers](Value const& val) -> bool {
+    return pointers.find(val) != pointers.end();
+  };
+  auto free_ptr = [&pointers](Value const& val) -> void {
+    pointers.erase(val);
+  };
+  auto new_ptr = [&pointers](Value const& val) -> void {
+    pointers.insert(val);
+  };
   auto Pop = [&data_stack]() -> Value {
     Value val = data_stack.top();
     data_stack.pop();
@@ -450,6 +469,12 @@ LoadClassDestructor: {
 }
 LoadObjectDestructor: {
   intptr_t ptr = Peek();
+  if (!is_pointer(ptr)) {
+    spdlog::critical("value {} is not a pointer!",
+                     reinterpret_cast<void*>(ptr));
+    
+    std::abort();
+  }
   Value* object_frame = reinterpret_cast<Value*>(ptr);
   Push(executable.classes[object_frame[0]].dtor_chunk.idx);
   DISPATCH();
@@ -458,33 +483,87 @@ LoadObjectField: {
   int index = instr.param;
   intptr_t ptr = Pop();
   Value* object_frame = reinterpret_cast<Value*>(ptr);
-  if (index < 0 || index >= executable.classes.size()) {
+  if (index < 0 || index >= executable.classes[object_frame[0]]
+                            .fields.size()) {
     spdlog::critical("invalid offset {} in object access at {}",
                      index, reinterpret_cast<void*>(object_frame));
     std::abort();
   }
-  // TODO type check
+  Value val = object_frame[index + 1];
+  if (is_pointer(val)) {
+      spdlog::critical("offset {} in object access at {} is a pointer!",
+                     index, reinterpret_cast<void*>(object_frame));
+    std::abort();
+  }
   Push(object_frame[index + 1]); // + 1 bc slot 0 is the class index
+  DISPATCH();
+}
+MoveOutObjectField: {
+  int index = instr.param;
+  intptr_t ptr = Pop();
+  if (!is_pointer(ptr)) {
+    spdlog::critical("value {} is not a pointer!",
+                     reinterpret_cast<void*>(ptr));
+    
+    std::abort();
+  }
+  Value* object_frame = reinterpret_cast<Value*>(ptr);
+  if (index < 0 || index >= executable.classes[object_frame[0]]
+                            .fields.size()) {
+    spdlog::critical("invalid offset {} in object access at {}",
+                     index, reinterpret_cast<void*>(object_frame));
+    
+    std::abort();
+  }
+  Value val = object_frame[index + 1];
+  object_frame[index + 1] = 0;
+  Push(val);
   DISPATCH();
 }
 StoreObjectField: {
   int index = instr.param;
   Value val = Pop();
   intptr_t ptr = Pop();
+  if (!is_pointer(ptr)) {
+    spdlog::critical("value {} is not a pointer!",
+                     reinterpret_cast<void*>(ptr));
+    
+    std::abort();
+  }
   Value* object_frame = reinterpret_cast<Value*>(ptr);
   if (index < 0 || index >= executable.classes.size()) {
     spdlog::critical("invalid offset {} in object access at {}",
                      index, reinterpret_cast<void*>(object_frame));
     std::abort();
   }
-  // TODO type check
+  // TODO type check, but not too harshly because we use this to write a pointer in an arrow op
   object_frame[index + 1] = val; // + 1 bc slot 0 is the class index
   DISPATCH();
 }
 Deallocate: {
   intptr_t ptr = Pop();
-  spdlog::debug("Deallocated at {}", reinterpret_cast<void*>(ptr));
-  delete[] reinterpret_cast<Value*>(ptr);
+  if (is_pointer(ptr)) {
+    spdlog::debug("Deallocated at {}", reinterpret_cast<void*>(ptr));
+    delete[] reinterpret_cast<Value*>(ptr);
+    free_ptr(ptr);
+  } else {
+    spdlog::debug("Value {} is not a pointer!", reinterpret_cast<void*>(ptr));
+  }
+  DISPATCH();
+}
+Destroy: {
+  intptr_t ptr = Pop();
+  if (is_pointer(ptr)) {
+    // Basically, we call the destructor here
+    // First we have to get it
+    instr.param = static_cast<int8_t>(executable.classes[*reinterpret_cast<Value*>(ptr)]
+                                      .dtor_chunk.idx);
+    // Then, we want to CALL, but we have to set our param first
+    auxiliary_stack[0] = ptr;
+    goto Call;
+    // TODO: But then we ALSO want to deallocate it! Otherwise we leak :(
+  }
+  // Otherwise, simply move on
   DISPATCH();
 }
 Allocate: {
@@ -492,6 +571,7 @@ Allocate: {
   intptr_t ptr = reinterpret_cast<intptr_t>(new Value[size]);
   spdlog::debug("Allocated {} bytes at {}",
                 size, reinterpret_cast<void*>(ptr));
+  new_ptr(ptr);
   Push(ptr);
   DISPATCH();
 }
@@ -500,11 +580,25 @@ AllocateImm: {
   intptr_t ptr = reinterpret_cast<intptr_t>(new Value[size]);
   spdlog::debug("Allocated {} bytes at {}",
                 size, reinterpret_cast<void*>(ptr));
+  new_ptr(ptr);
   Push(ptr);
   DISPATCH();
 }
 LoadAuxiliary: {
-  Push(auxiliary_stack.at(instr.param));
+  auto val = auxiliary_stack.at(instr.param);
+  // TODO: Consider adding this back
+  // if (is_pointer(val)) {
+  //   spdlog::critical("Attempting to load a pointer {}! Move instead.",
+  //                   val);
+  //   std::abort();
+  // }
+  Push(val);
+  DISPATCH();
+}
+MoveAuxiliary: {
+  auto val = auxiliary_stack.at(instr.param);
+  auxiliary_stack.at(instr.param) = 0;
+  Push(val);
   DISPATCH();
 }
 StoreAuxiliary: {

@@ -211,6 +211,7 @@ void EmitIf(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& ch
     });
     // We need to negate so that TestAndJump jumps us if we do NOT match
     first = chunk.code.size();
+    ctx.pop_top();
     Emit(chunk, bytecode::Instruction{
       .opcode = bytecode::Opcode::kTestAndJump,
       .param = 0 // PLACEHOLDER
@@ -417,6 +418,86 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
         // TODO: ERROR (Identifier is not a function)
       }
     }
+  } else if (std::holds_alternative<ast::ArrowInstNode>(instr)) {
+    auto const& arrow = std::get<ast::ArrowInstNode>(instr);
+    if (std::holds_alternative<ast::RValueNode>(arrow.rhs)) {
+      auto const& rhs = std::get<ast::RValueNode>(arrow.rhs);
+      Emit(chunk, bytecode::Instruction{
+        .opcode = bytecode::Opcode::kMoveAuxiliary,
+        .param = TranslateRegister(rhs)
+      });
+    } else if (std::holds_alternative<ast::MemberNode>(arrow.rhs)) {
+      auto const& rhs = std::get<ast::MemberNode>(arrow.rhs);
+      auto symbol = rhs.type.id + ':' + rhs.field.id;
+      auto itr = exe.symbol_table.find(symbol);
+      if (itr == exe.symbol_table.end()) {
+        // TODO: ERROR (field symbol not found)
+      } else {
+        if (std::holds_alternative<bytecode::FieldId>(itr->second)) {
+          auto fid = std::get<bytecode::FieldId>(itr->second).idx;
+          // Load the pointer on stack
+          Emit(chunk, bytecode::Instruction{
+            .opcode = bytecode::Opcode::kLoadAuxiliary,
+            .param = TranslateRegister(rhs.obj)
+          });
+          // Move the field to stack
+          Emit(chunk, bytecode::Instruction{
+            .opcode = bytecode::Opcode::kMoveOutObjectField,
+            .param = static_cast<int8_t>(fid)
+          });
+        } else {
+          // TODO: ERROR (symbol is not a field)
+        }
+      }
+    } else if (std::holds_alternative<ast::MakeNode>(arrow.rhs)) {
+      // TODO: Perform a Make!
+    } else {
+      // TODO: ERROR (Unsupported arrow rhs)
+    }
+    // Any time we move like this, we need to make sure that our lhs
+    // needs to be destroyed, if necessary.
+    // We will basically need to emit some code that would perform this check
+    if (std::holds_alternative<ast::LValueNode>(arrow.lhs)) {
+      // Here, we will call Destroy to ensure that the lhs is properly destroyed
+      // This involves us loading it first (more specifically, MOVING it to stack)
+      auto const& lhs = std::get<ast::LValueNode>(arrow.lhs);
+
+      Emit(chunk, bytecode::Instruction{
+        .opcode = bytecode::Opcode::kMoveAuxiliary,
+        .param = TranslateRegister(lhs)
+      });
+      Emit(chunk, bytecode::Instruction{
+        .opcode = bytecode::Opcode::kDestroy,
+        .param = 0
+      });
+      Emit(chunk, bytecode::Instruction{
+        .opcode = bytecode::Opcode::kStoreAuxiliary,
+        .param = TranslateRegister(lhs)
+      });
+    } else if (std::holds_alternative<ast::MemberNode>(arrow.lhs)) {
+      auto const& lhs = std::get<ast::MemberNode>(arrow.lhs);
+
+      auto symbol = lhs.type.id + ':' + lhs.field.id;
+      auto itr = exe.symbol_table.find(symbol);
+      if (itr == exe.symbol_table.end()) {
+        // TODO: ERROR (field symbol not found)
+      } else {
+        if (std::holds_alternative<bytecode::FieldId>(itr->second)) {
+          auto fid = std::get<bytecode::FieldId>(itr->second).idx;
+          // Load the pointer on stack
+          Emit(chunk, bytecode::Instruction{
+            .opcode = bytecode::Opcode::kLoadAuxiliary,
+            .param = TranslateRegister(lhs.obj)
+          });
+          Emit(chunk, bytecode::Instruction{
+            .opcode = bytecode::Opcode::kStoreObjectField,
+            .param = static_cast<int8_t>(fid)
+          });
+        } else {
+          // TODO: ERROR (field identifier is not a field)
+        }
+      }
+    }
   } else {
     // TODO: ERROR (Unsupported instruction)
   }
@@ -460,7 +541,8 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
         exe.chunks.push_back(bytecode::BytecodeChunk{});
       }
       // First field starts at 1, there's an implicit 0th field.
-      int fOffset = 1;
+      // BUT, that's taken care of the internals
+      int fOffset = 0;
       bytecode::BytecodeExecutable::ClassDataRecord record{
         .name = type.id.id,
         .ctor_chunk = bytecode::ChunkId { .idx = cidx },

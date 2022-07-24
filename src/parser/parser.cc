@@ -16,5 +16,6 @@ ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
 
   auto program = parser.program();
   ASTBuilderVisitor visitor;
+
   return std::any_cast<ast::ProgramNode>(visitor.visitProgram(program));
 };

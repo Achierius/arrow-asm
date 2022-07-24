@@ -38,6 +38,7 @@ enum AstNodeType {
   kImm,
   kArg,
   kInst,
+  kCallInst,
   kNoRetInst,
   kNoArgInst,
   kBinaryInst,
@@ -89,7 +90,7 @@ enum class RegisterCategory {
 struct RegisterNode : public AstNode<kRegister> {
   // TODO: Add type?
   RegisterCategory category;
-  int8_t register_id;
+  uint8_t register_id;
 };
 
 // Instruction nodes
@@ -133,6 +134,10 @@ enum class NoArgOperator {
 };
 struct NoArgNode : public AstNode<kNoArgInst> {
   NoArgOperator op;
+};
+// CallNode
+struct CallNode : public AstNode<kCallInst> {
+  IdNode id;
 };
 // NoRetNode
 enum class NoRetOperator {
@@ -180,10 +185,10 @@ struct IfNode : public AstNode<kIfStmt> {
 };
 
 struct InstructionNode : public AstNode<kInstruction>,
-                         public std::variant<std::monostate, ArrowInstNode, NoArgNode, NoRetNode,
+                         public std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode,
                                              BinaryNode, MemoryNode, IfNode> {
-  using std::variant<std::monostate, ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::variant;
-  using std::variant<std::monostate, ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::operator=;
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::variant;
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::operator=;
 };
 
 // Function nodes

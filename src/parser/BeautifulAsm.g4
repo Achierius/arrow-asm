@@ -11,15 +11,15 @@ ID  : [_a-z]+[_a-z0-9]*;
 INT_NUM : [-]?('0' | [1-9][0-9]*);
 FLOAT_NUM : INT_NUM '.' ([0-9]*[1-9])?;
 
+COMMENT : [;]~('\r'|'\n')* -> skip;
 WS      : [ \t\r\n]+ -> skip;
 NEWLINE : '\r'? '\n';
-COMMENT : [;][^\r\n]* -> skip;
 
 any_number : INT_NUM | FLOAT_NUM;
 
 ARROW : '<-';
 
-program : statement*;
+program : statement* EOF;
 
 statement : function_definition
           | type_definition;
@@ -50,13 +50,16 @@ instructions : instruction*;
 
 instruction : arrow_instruction
             | no_arg_instruction
+            | print_instruction
+            | call_instruction
             | binary_operator_instruction
             | memory_instruction
             | if_statement;
 
-no_arg_instruction          : operator=no_arg_operator;
-arrow_instruction           : lhs=arrow_lhs ARROW rhs=arrow_rhs;
-print_instruction            : 'print' arg1=any_argument;
+arrow_instruction           : arrow_lhs ARROW arrow_rhs;
+no_arg_instruction          : no_arg_operator;
+call_instruction            : 'call' ID;
+print_instruction           : 'print' arg1=any_argument;
 binary_operator_instruction : binary_operator arg1=any_lvalue ',' arg2=any_argument ',' arg3=any_argument;
 memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_destination;
 

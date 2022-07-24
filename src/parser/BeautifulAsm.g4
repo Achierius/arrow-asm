@@ -29,22 +29,22 @@ any_rvalue : LREG | IPREG | OPREG | SREG;
 
 register_type : 'long'
               | 'double'
-              | 'ptr' '<' datatype=object_type '>';
+              | 'ptr' '<' object_type '>';
 
 object_type : ID
             | register_type;
 
-type_definition : 'type' name=ID '{' (constructor | destructor | field)* '}';
+type_definition : 'type' ID '{' (constructor | destructor | field)* '}';
 
 CTOR : 'ctor';
 DTOR : 'dtor';
 constructor : CTOR '{' instructions '}';
 destructor  : DTOR '{' instructions '}';
 
-field : field_name=ID ':' field_type=register_type;
+field : ID ':' register_type;
 
-function_definition : 'fn' name=ID parameter_list? '{' instructions '}';
-parameter_list : '(' type=register_type (',' type=register_type)* ')';
+function_definition : 'fn' ID parameter_list? '{' instructions '}';
+parameter_list : '(' register_type (',' register_type)* ')';
 
 instructions : instruction*;
 
@@ -65,8 +65,8 @@ memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_de
 
 IF : 'if';
 ELSE : 'else';
-if_statement : IF condition=any_argument '{' instructions '}' elif_branch* else_branch?;
-elif_branch  : ELSE condition=any_argument '{' instructions '}';
+if_statement : IF any_argument '{' instructions '}' elif_branch* else_branch?;
+elif_branch  : ELSE any_argument '{' instructions '}';
 else_branch  : ELSE '{' instructions '}';
 
 any_argument : any_rvalue | any_number;
@@ -78,9 +78,9 @@ arrow_rhs : make_constructor
           | any_rvalue
           | any_field;
 
-make_constructor : 'make' type=ID (any_argument)*;
+make_constructor : 'make' object_type;
 
-any_field : any_rvalue '.' field_name=ID;
+any_field : any_rvalue '.' ID;
 
 memory_destination : any_rvalue
                    | any_field;

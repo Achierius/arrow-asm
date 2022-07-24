@@ -77,4 +77,13 @@ TEST(ParserTest, ParserTestTypes) {
     EXPECT_TRUE(std::holds_alternative<ast::TypeNode>(*ast.statements[0]));
     EXPECT_TRUE(std::holds_alternative<ast::TypeNode>(*ast.statements[0]));
 }
+
+TEST(ParserTest, ParserTestBranch) {
+    std::ifstream stream("./test/test_programs/branch.aasm", std::ios::in);
+    std::stringstream ss;
+    ss << stream.rdbuf();
+
+    auto ast = parser::ParseFullProgram(ss.str());
+}
+
 }

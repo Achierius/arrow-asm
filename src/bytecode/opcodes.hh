@@ -59,6 +59,7 @@ enum Opcode {
   kLoadClassDestructor = 0x84, // Class determined by Imm
   kLoadObjectField = 0x85, // push IMMth field of object @ *TOS
   kStoreObjectField = 0x86, // pop TOS into IMMth field of object @ *TOS1
+  kLoadObjectDestructor = 0x87, // loads destructor based on object in frame
 };
 
 } // namespace bytecode

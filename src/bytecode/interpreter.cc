@@ -426,27 +426,50 @@ LoadClassDestructor: {
   DISPATCH();
 }
 LoadObjectField: {
-  // TODO unimplemented
-  goto BadOpcode;
+  int index = instr.param;
+  intptr_t ptr = Pop();
+  Value* object_frame = reinterpret_cast<Value*>(ptr);
+  if (index < 0 || index >= executable.classes.size()) {
+    spdlog::critical("invalid offset {} in object access at {}",
+                     index, reinterpret_cast<void*>(object_frame));
+    std::abort();
+  }
+  Push(object_frame[index]);
+  DISPATCH();
 }
 StoreObjectField: {
-  // TODO unimplemented
-  goto BadOpcode;
+  int index = instr.param;
+  Value val = Pop();
+  intptr_t ptr = Pop();
+  Value* object_frame = reinterpret_cast<Value*>(ptr);
+  if (index < 0 || index >= executable.classes.size()) {
+    spdlog::critical("invalid offset {} in object access at {}",
+                     index, reinterpret_cast<void*>(object_frame));
+    std::abort();
+  }
+  // TODO type check
+  object_frame[index] = val;
+  DISPATCH();
 }
 Deallocate: {
   intptr_t ptr = Pop();
-  delete[] reinterpret_cast<std::byte*>(ptr);
+  spdlog::debug("Deallocated at {}", reinterpret_cast<void*>(ptr));
+  delete[] reinterpret_cast<Value*>(ptr);
   DISPATCH();
 }
 Allocate: {
   size_t size = Pop();
-  intptr_t ptr = reinterpret_cast<intptr_t>(new std::byte[size]);
+  intptr_t ptr = reinterpret_cast<intptr_t>(new Value[size]);
+  spdlog::debug("Allocated {} bytes at {}",
+                size, reinterpret_cast<void*>(ptr));
   Push(ptr);
   DISPATCH();
 }
 AllocateImm: {
   size_t size = instr.param;
-  intptr_t ptr = reinterpret_cast<intptr_t>(new std::byte[size]);
+  intptr_t ptr = reinterpret_cast<intptr_t>(new Value[size]);
+  spdlog::debug("Allocated {} bytes at {}",
+                size, reinterpret_cast<void*>(ptr));
   Push(ptr);
   DISPATCH();
 }

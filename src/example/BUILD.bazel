@@ -27,15 +27,15 @@ antlr_cc_library(
     package = "example",
 )
 
-cc_library(
-    name = "llvm_test",
-    hdrs = [
-        "llvm_test.hh",
-    ],
-    srcs = [
-        "llvm_test.cc",
-    ],
-    deps = [
-        "//foreign:llvm",
-    ],
-)
+# cc_library(
+#     name = "llvm_test",
+#     hdrs = [
+#         "llvm_test.hh",
+#     ],
+#     srcs = [
+#         "llvm_test.cc",
+#     ],
+#     deps = [
+#         "//foreign:llvm",
+#     ],
+# )

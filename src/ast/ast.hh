@@ -89,7 +89,7 @@ enum class RegisterCategory {
 struct RegisterNode : public AstNode<kRegister> {
   // TODO: Add type?
   RegisterCategory category;
-  int register_id;
+  int8_t register_id;
 };
 
 // Instruction nodes

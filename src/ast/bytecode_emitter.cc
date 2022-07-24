@@ -53,7 +53,7 @@ void Emit(bytecode::BytecodeChunk& chunk, bytecode::Instruction const& inst) {
   chunk.code.push_back(inst);
 }
 
-auto TranslateRegister(ast::RegisterNode const& node) {
+int8_t TranslateRegister(ast::RegisterNode const& node) {
   switch (node.category) {
     // TODO: Assert that the register_id is valid!
     case ast::RegisterCategory::Return:
@@ -107,7 +107,7 @@ void Emit(bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::ArgNode con
       // TODO: Need to disallow using a pointer register (sometimes)
       
       Emit(chunk, bytecode::Instruction{
-        .opcode = kLoadAuxiliary,
+        .opcode = bytecode::Opcode::kLoadAuxiliary,
         .param = TranslateRegister(std::get<ast::RValueNode>(arg))
       });
     }

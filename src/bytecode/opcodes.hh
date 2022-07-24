@@ -40,6 +40,7 @@ enum Opcode {
   kBiasGlobalWindow = 0x45,
   kStoreAuxiliary = 0x46,
   kLoadAuxiliary = 0x47,
+  kMoveAuxiliary = 0x48, // moves the value and sets the existing one to nothing
 
   // Stack manipulation
   kDup = 0x60,
@@ -63,6 +64,8 @@ enum Opcode {
   kLoadObjectField = 0x85, // push IMMth field of object @ *TOS
   kStoreObjectField = 0x86, // pop TOS into IMMth field of object @ *TOS1
   kLoadObjectDestructor = 0x87, // loads destructor based on object in frame
+  kMoveOutObjectField = 0x88, // moves the field and sets the exiting one to nothing
+  kDestroy = 0x89, // pop TOS and call its destructor, if it has one, otherwise do nothing
 };
 
 } // namespace bytecode

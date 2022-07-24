@@ -117,10 +117,19 @@ git_repository(
     shallow_since = "1603130496 -0400",
 )
 
-http_archive(
-    name = "llvm",
-    strip_prefix = "bazel_llvm-4f47105d6200a8846ba9b9b5058192f13b12cfe3",
-    urls = ["https://github.com/ChrisCummins/bazel_llvm/archive/4f47105d6200a8846ba9b9b5058192f13b12cfe3.tar.gz"],
+load("//foreign:llvm.bzl", "llvm")
+llvm(
+    name = "llvm-darwin-x86_64",
+    workspace_name = "beautiful-asm",
+    host_triple = "x86_64-apple-darwin",
 )
-load("@llvm//tools/bzl:deps.bzl", "llvm_deps")
-llvm_deps()
+llvm(
+    name = "llvm-linux-aarch64",
+    workspace_name = "beautiful-asm",
+    host_triple = "aarch64-linux-gnu",
+)
+llvm(
+    name = "llvm-linux-x86_64",
+    workspace_name = "beautiful-asm",
+    host_triple = "x86_64-linux-gnu-ubuntu-18.04",
+)

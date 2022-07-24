@@ -31,5 +31,8 @@ namespace parser {
       virtual std::any visitObject_type(BeautifulAsmParser::Object_typeContext *ctx);
       virtual std::any visitRegister_type(BeautifulAsmParser::Register_typeContext *ctx);
       virtual std::any visitField(BeautifulAsmParser::FieldContext *ctx);
+      virtual std::any visitIf_statement(BeautifulAsmParser::If_statementContext *ctx);
+      virtual std::any visitElif_branch(BeautifulAsmParser::Elif_branchContext *ctx);
+      virtual std::any visitElse_branch(BeautifulAsmParser::Else_branchContext *ctx);
   };
 }

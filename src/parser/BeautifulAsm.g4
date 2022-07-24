@@ -63,11 +63,9 @@ print_instruction           : 'print' arg1=any_argument;
 binary_operator_instruction : binary_operator arg1=any_lvalue ',' arg2=any_argument ',' arg3=any_argument;
 memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_destination;
 
-IF : 'if';
-ELSE : 'else';
-if_statement : IF any_argument '{' instructions '}' elif_branch* else_branch?;
-elif_branch  : ELSE any_argument '{' instructions '}';
-else_branch  : ELSE '{' instructions '}';
+if_statement : 'if' any_argument '{' instructions '}' elif_branch* else_branch?;
+elif_branch  : 'else' any_argument '{' instructions '}';
+else_branch  : 'else' '{' instructions '}';
 
 any_argument : any_rvalue | any_number;
 

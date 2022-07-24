@@ -38,5 +38,6 @@ namespace parser {
       virtual std::any visitIf_statement(BeautifulAsmParser::If_statementContext *ctx);
       virtual std::any visitElif_branch(BeautifulAsmParser::Elif_branchContext *ctx);
       virtual std::any visitElse_branch(BeautifulAsmParser::Else_branchContext *ctx);
+      virtual std::any visitWhile_loop(BeautifulAsmParser::While_loopContext *ctx);
   };
 }

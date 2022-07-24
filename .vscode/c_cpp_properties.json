@@ -2,15 +2,10 @@
     "configurations": [
         {
             "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**"
-            ],
-            "defines": [],
+            "includePath": ["${workspaceFolder}"],
+            "compileCommands": "${workspaceFolder}/compile_commands.json",
             "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
-            "cppStandard": "c++14",
-            "intelliSenseMode": "linux-clang-x64",
-            "compileCommands": "compile_commands.json"
+            "cppStandard": "gnu++20"
         }
     ],
     "version": 4

@@ -44,6 +44,7 @@ enum AstNodeType {
   kBinaryInst,
   kMemoryInst,
   kIfStmt,
+  kWhileLoop,
   kElif,
   kElse,
   kMake
@@ -217,12 +218,17 @@ struct IfNode : public AstNode<kIfStmt> {
   std::optional<ElseNode> else_node;
   std::vector<std::shared_ptr<InstructionNode>> body;
 };
+// WhileNode
+struct WhileNode : public AstNode<kWhileLoop> {
+  ArgNode condition;
+  std::vector<std::shared_ptr<InstructionNode>> body;
+};
 
 struct InstructionNode : public AstNode<kInstruction>,
                          public std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode,
-                                             UnaryNode, BinaryNode, MemoryNode, IfNode> {
-  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode>::variant;
-  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode>::operator=;
+                                             UnaryNode, BinaryNode, MemoryNode, IfNode, WhileNode> {
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode, WhileNode>::variant;
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode, WhileNode>::operator=;
 };
 
 // Function nodes

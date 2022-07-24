@@ -237,6 +237,44 @@ void EmitIf(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChunk& chunk, F
   }
 }
 
+void EmitWhile(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx,
+            std::vector<std::shared_ptr<ast::InstructionNode>> const& body, ast::ArgNode condition,
+            FuncInstContext& nested_ctx) {
+  nested_ctx.parent = &ctx;
+  // Copy our (known) type information to our nested context.
+  std::copy(ctx.reg_types.begin(), ctx.reg_types.end(), nested_ctx.reg_types.begin());
+
+  // First, we handle our loop condition
+  int loop_header = chunk.code.size();
+  EmitArg(chunk, ctx, condition);
+  Emit(chunk, bytecode::Instruction{
+    .opcode = bytecode::kLogicalNeg,
+    .param = 0
+  });
+  // We need to negate so that TestAndJump jumps us if we do NOT match
+  int conditional_jump = chunk.code.size();
+  ctx.pop_top();
+  Emit(chunk, bytecode::Instruction{
+    .opcode = bytecode::Opcode::kTestAndJump,
+    .param = 0 // PLACEHOLDER
+  });
+  
+  // Now we handle the loop body
+  for (auto const& i : body) {
+    HandleInstruction(exe, chunk, nested_ctx, *i);
+  }
+
+  int header_offset = loop_header - (int) chunk.code.size();
+  // jump back to loop header
+  Emit(chunk, bytecode::Instruction{
+    .opcode = bytecode::Opcode::kJump,
+    .param = (int8_t) header_offset
+  });
+
+  // We can go back now to our first and modify the param
+  chunk.code[conditional_jump].param = static_cast<int8_t>(chunk.code.size() - conditional_jump);
+}
+
 std::string symb_name(ast::ObjectTypeNode const& o) {
   if (std::holds_alternative<ast::LongNode>(o)) {
     return "long";
@@ -253,7 +291,7 @@ std::string symb_name(ast::ObjectTypeNode const& o) {
 // TODO: Return bool?
 void HandleInstruction(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst) {
   auto const& instr = inst;
-  // ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode
+  // ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode, WhileNode
   if (std::holds_alternative<ast::IfNode>(instr)) {
     auto const& ifstmt = std::get<ast::IfNode>(instr);
     // If statements (and all nested statements) are kind of interesting
@@ -288,6 +326,18 @@ void HandleInstruction(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChun
     for (auto idx : lasts) {
       chunk.code[idx].param = static_cast<int8_t>(landing_pad_idx - idx); 
     }
+    // TODO: Walk our types and apply a union to our top level context
+  } if (std::holds_alternative<ast::WhileNode>(instr)) {
+    auto const& while_loop = std::get<ast::WhileNode>(instr);
+
+    FuncInstContext nested_ctx;
+    EmitWhile(exe, chunk, ctx, while_loop.body, while_loop.condition, nested_ctx);
+
+    // Ensure we have a landing pad when condition fails
+    Emit(chunk, bytecode::Instruction{
+      .opcode = bytecode::Opcode::kNop,
+      .param = 0
+    });
     // TODO: Walk our types and apply a union to our top level context
   } else if (std::holds_alternative<ast::NoArgNode>(instr)) {
     auto& node = std::get<ast::NoArgNode>(instr);

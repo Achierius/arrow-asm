@@ -89,6 +89,8 @@ namespace parser {
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::NoArgNode>(visitChildren(ctx)));
     if (ctx->if_statement())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::IfNode>(visitChildren(ctx)));
+    if (ctx->while_loop())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::WhileNode>(visitChildren(ctx)));
     return {};
   }
   
@@ -311,4 +313,10 @@ namespace parser {
     return node;
   }
 
+  std::any ASTBuilderVisitor::visitWhile_loop(BeautifulAsmParser::While_loopContext *ctx) {
+    ast::WhileNode node;
+    node.condition = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->any_argument()));
+    node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
+    return node;
+  }
 }

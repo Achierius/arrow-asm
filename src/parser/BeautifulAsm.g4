@@ -57,7 +57,8 @@ instruction : arrow_instruction
             | unary_operator_instruction
             | binary_operator_instruction
             | memory_instruction
-            | if_statement;
+            | if_statement
+            | while_loop;
 
 arrow_instruction           : arrow_lhs ARROW arrow_rhs;
 no_arg_instruction          : no_arg_operator;
@@ -72,6 +73,8 @@ memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_de
 if_statement : 'if' any_argument '{' instructions '}' elif_branch* else_branch?;
 elif_branch  : 'else' any_argument '{' instructions '}';
 else_branch  : 'else' '{' instructions '}';
+
+while_loop : 'while' any_argument '{' instructions '}';
 
 any_argument : any_rvalue | any_number;
 

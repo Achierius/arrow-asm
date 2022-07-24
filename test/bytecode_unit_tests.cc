@@ -27,7 +27,7 @@ TEST(Bytecode, BasicTest) {
   spdlog::cfg::load_env_levels();
   auto bin = makeFlatBinary( {
       { kImmByte, 3 },
-      { kReturn },
+      { kExit },
   });
   int return_value = InterpretBytecode(bin);
   EXPECT_EQ(return_value, 3);
@@ -40,7 +40,7 @@ TEST(Bytecode, ConstantTestBasic) {
       { kBiasConstantWindow, 2 },
       { kConstant, 0 },
       { kAddLong },
-      { kReturn },
+      { kExit },
   });
   bin.chunks[0].constants.push_back(1);
   bin.chunks[0].constants.push_back(10);

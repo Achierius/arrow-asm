@@ -86,7 +86,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   std::array<void*, 256> opcode_dispatch_table = {
     /********** 0x00 **********/
     &&Trap,
-    &&Return,
+    &&Exit,
     &&Breakpoint,
     &&PrintLong,
     EMPTY_OPCODE,
@@ -104,10 +104,13 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&LeftShiftLong,
     &&RightShiftLogicalLong,
     &&RightShiftArithmeticLong,
-    EMPTY_OPCODE,
-    EMPTY_OPCODE,
-    EMPTY_OPCODE,
-    EMPTY_OPCODES_4(),
+    &&LogicalAndLong,
+    &&LogicalOrLong,
+    &&UnaryNegate,
+    &&AddFloat,
+    &&SubFloat,
+    &&MulFloat,
+    &&DivFloat,
     /********** 0x20 **********/
     EMPTY_OPCODES_16(),
     /********** 0x30 **********/
@@ -116,20 +119,36 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&ImmByte,
     &&Constant,
     &&BiasConstantWindow,
+    &&LoadGlobal,
+    &&StoreGlobal,
+    &&BiasGlobalWindow,
     EMPTY_OPCODE,
     EMPTY_OPCODE,
-    EMPTY_OPCODE,
-    EMPTY_OPCODES_12(),
+    EMPTY_OPCODES_8(),
     /********** 0x50 **********/
     EMPTY_OPCODES_16(),
     /********** 0x60 **********/
     &&Dup,
     &&Rot2,
     &&Rot3,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_12(),
     /********** 0x70 **********/
-    EMPTY_OPCODES_16(),
+    &&Jump,
+    &&TestAndJump,
+    &&Call,
+    &&Return,
+    EMPTY_OPCODES_12(),
     /********** 0x80 **********/
-    EMPTY_OPCODES_16(),
+    &&Allocate,
+    &&AllocateImm,
+    &&Deallocate,
+    &&LoadClassConstructor,
+    &&LoadClassDestructor,
+    &&LoadObjectField,
+    &&StoreObjectField,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_8(),
     /********** 0x90 **********/
     EMPTY_OPCODES_16(),
     /********** 0xA0 **********/
@@ -151,7 +170,8 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   int cycle_count = 0;     // how many instructions we've executed
   int pc = 0; // within chunk
   int constant_window_base = 0; // within current chunk
-  std::stack<Value> stack;
+  std::stack<Value> data_stack;
+  std::stack<std::pair<int, int>> return_stack; // chunk_idx, pc
   Instruction instr;
 
   // debug-only hook that gets called every time we dispatch to let us log stuff
@@ -161,16 +181,16 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     cycle_count++;
   };
 
-  auto Pop = [&stack]() -> Value {
-    Value val = stack.top();
-    stack.pop();
+  auto Pop = [&data_stack]() -> Value {
+    Value val = data_stack.top();
+    data_stack.pop();
     return val;
   };
-  auto Peek = [&stack]() -> Value {
-    return stack.top();
+  auto Peek = [&data_stack]() -> Value {
+    return data_stack.top();
   };
-  auto Push = [&stack](Value val) {
-    stack.push(val);
+  auto Push = [&data_stack](Value val) {
+    data_stack.push(val);
   };
 
   DISPATCH_NO_INCR_PC(); // kick it off and it'll drive itself
@@ -182,7 +202,7 @@ BadOpcode:
 Trap:
   spdlog::critical("user code trap");
   std::abort();
-Return:
+Exit:
   return Peek();
 Breakpoint:
   // TODO unimplemented
@@ -256,6 +276,18 @@ BiasConstantWindow: {
   constant_window_base += static_cast<int8_t>(instr.param);
   DISPATCH();
 }
+LoadGlobal: {
+  // TODO
+  goto BadOpcode;
+}
+BiasGlobalWindow: {
+  // TODO
+  goto BadOpcode;
+}
+StoreGlobal: {
+  // TODO
+  goto BadOpcode;
+}
 Dup:
   Push(Peek());
   DISPATCH();
@@ -274,6 +306,78 @@ Rot3: {
   Push(tos);
   Push(tos2);
   DISPATCH();
+}
+LogicalAndLong: {
+  // TODO
+  goto BadOpcode;
+}
+LogicalOrLong: {
+  // TODO
+  goto BadOpcode;
+}
+UnaryNegate: {
+  // TODO
+  goto BadOpcode;
+}
+AddFloat: {
+  // TODO
+  goto BadOpcode;
+}
+SubFloat: {
+  // TODO
+  goto BadOpcode;
+}
+MulFloat: {
+  // TODO
+  goto BadOpcode;
+}
+DivFloat: {
+  // TODO
+  goto BadOpcode;
+}
+Jump: {
+  // TODO
+  goto BadOpcode;
+}
+TestAndJump: {
+  // TODO
+  goto BadOpcode;
+}
+Call: {
+  // TODO
+  goto BadOpcode;
+}
+Return: {
+  // TODO
+  goto BadOpcode;
+}
+LoadClassConstructor: {
+  // TODO
+  goto BadOpcode;
+}
+LoadClassDestructor: {
+  // TODO
+  goto BadOpcode;
+}
+LoadObjectField: {
+  // TODO
+  goto BadOpcode;
+}
+StoreObjectField: {
+  // TODO
+  goto BadOpcode;
+}
+Deallocate: {
+  // TODO
+  goto BadOpcode;
+}
+Allocate: {
+  // TODO
+  goto BadOpcode;
+}
+AllocateImm: {
+  // TODO
+  goto BadOpcode;
 }
 
   __builtin_unreachable();

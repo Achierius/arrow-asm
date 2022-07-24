@@ -331,7 +331,7 @@ ASTBuilderVisitor::visitAny_lvalue(AasmParser::Any_lvalueContext *ctx) {
     node.category = ast::RegisterCategory::Return;
     node.register_id = std::stoi(text.substr(2));
   } else if (text.starts_with("sr")) {
-    node.category = ast::RegisterCategory::Static;
+    node.category = ast::RegisterCategory::Global;
     node.register_id = std::stoi(text.substr(2));
   }
   node.sourcePos = ctx->getSourceInterval().toString();
@@ -372,7 +372,7 @@ ASTBuilderVisitor::visitAny_rvalue(AasmParser::Any_rvalueContext *ctx) {
     node.category = ast::RegisterCategory::Return;
     node.register_id = std::stoi(text.substr(2));
   } else if (text.starts_with("sr")) {
-    node.category = ast::RegisterCategory::Static;
+    node.category = ast::RegisterCategory::Global;
     node.register_id = std::stoi(text.substr(2));
   }
   node.sourcePos = ctx->getSourceInterval().toString();

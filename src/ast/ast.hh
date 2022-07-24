@@ -94,7 +94,7 @@ struct ObjectTypeNode : public AstNode<kObjectType>,
 };
 
 // Register node
-enum class RegisterCategory { Local, Param, OutgoingParam, Return, Static };
+enum class RegisterCategory { Local, Param, OutgoingParam, Return, Global };
 struct RegisterNode : public AstNode<kRegister> {
   // TODO: Add type?
   RegisterCategory category;

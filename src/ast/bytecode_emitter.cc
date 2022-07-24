@@ -103,7 +103,7 @@ int8_t TranslateRegister(ast::RegisterNode const &node) {
     return 32 + node.register_id;
   case ast::RegisterCategory::OutgoingParam:
     return 0 + node.register_id;
-  case ast::RegisterCategory::Static:
+  case ast::RegisterCategory::Global:
   default:
     return node.register_id;
   }

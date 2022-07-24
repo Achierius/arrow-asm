@@ -1,18 +1,27 @@
 #pragma once
 
 #include <cstddef>
-#include <vector>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "opcodes.hh"
 
 namespace bytecode {
 
-struct ClassId { int idx; };
-struct ChunkId { int idx; };
-struct FieldId { int idx; };
+constexpr int kAuxiliaryStackBaseSize = 64;
+constexpr int kAuxiliaryStackWindowSize = 48;
+
+struct ClassId {
+  int idx;
+};
+struct ChunkId {
+  int idx;
+};
+struct FieldId {
+  int idx;
+};
 using Value = int64_t;
 using Address = uint64_t; // TODO wrap this in a struct to prevent conversion
 struct Instruction {
@@ -25,9 +34,7 @@ struct Instruction {
 struct BytecodeChunk {
   std::vector<Instruction> code;
   std::vector<Value> constants; // necessary bc we want fixed-length instrs
-  std::vector<std::string> symbol_pool;
-  // TODO will this need symbols, or can those just be held in the
-  // BytecodeExecutable (and thus gathered there directly from the file)?
+  // std::vector<std::string> symbol_pool;
 };
 
 // TODO this should be rebundled as a class w/ invariants
@@ -45,16 +52,15 @@ struct BytecodeExecutable {
   // symbol tables which embed 'external' chunks, since we don't actually need
   // to have everything pinned w/in an address space (?)
   int index;
-  using Symbol = std::variant<std::monostate, Address, ClassId, ChunkId, FieldId>;
+  using Symbol =
+      std::variant<std::monostate, Address, ClassId, ChunkId, FieldId>;
   std::unordered_map<std::string, Symbol> symbol_table;
 
   enum ValueType {
-    kVoid,
     kLong,
     kDouble,
     kCodePtr,
     kDataPtr,
-    kObject,
   };
   struct ClassDataRecord {
     std::string name; // may not actually be necessary

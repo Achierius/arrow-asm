@@ -16,6 +16,7 @@ int main() {
     };
     BytecodeExecutable exec;
     exec.chunks = {chunk};
+    exec.chunk_locations = {0};
     
     Generate(exec, "test.o");
 }

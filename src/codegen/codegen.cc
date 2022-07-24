@@ -73,7 +73,8 @@ void Codegen::defineFunctions() {
         return; // functions not declared yet (TODO: log)
 
     for (size_t i = 0; i < bytecode.chunks.size(); i++) {
-        auto &[chunk, address] = bytecode.chunks[i];
+        auto &chunk = bytecode.chunks[i];
+        auto &address = bytecode.chunk_locations[i];
         auto *f = functions[i];
 
         emitFunction(f, chunk, address);

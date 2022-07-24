@@ -1,11 +1,9 @@
-# beautiful-asm
-we can rename it l8r
+# arrow-asm
+the name is perfect and shall never be changed
 
 ## TODO
 
-- [ ] Modules
-- [ ] Assembly-like language
-- [ ] Well defined type system
+- [ ] find a single flaw whatsoever (very challenging!)
 
 ## Docs
 ### Generating compilation database

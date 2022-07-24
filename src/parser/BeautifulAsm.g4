@@ -32,14 +32,14 @@ register_type : 'long'
               | 'ptr' '<' object_type '>';
 
 object_type : ID
-            | register_type;
+            | 'long'
+            | 'double'
+            | 'ptr' '<' object_type '>';
 
 type_definition : 'type' ID '{' (constructor | destructor | field)* '}';
 
-CTOR : 'ctor';
-DTOR : 'dtor';
-constructor : CTOR '{' instructions '}';
-destructor  : DTOR '{' instructions '}';
+constructor : 'ctor' parameter_list? '{' instructions '}';
+destructor  : 'dtor' '{' instructions '}';
 
 field : ID ':' register_type;
 
@@ -80,7 +80,7 @@ arrow_rhs : make_constructor
 
 make_constructor : 'make' object_type;
 
-any_field : any_rvalue '.' ID;
+any_field : any_rvalue '.' type_name=ID ':' field_name=ID;
 
 memory_destination : any_rvalue
                    | any_field;

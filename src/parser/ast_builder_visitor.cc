@@ -19,7 +19,7 @@ namespace parser {
     auto node = ast::FunctionNode();
     node.id = ast::IdNode{ .id{ctx->ID()->getText()} };
     if (ctx->parameter_list()) {
-      // node->params = std::any_cast<std::vector<std::shared_ptr<ast::ParamNode>>>(visitParameter_list(ctx->parameter_list()));
+      node.params = std::any_cast<std::vector<std::shared_ptr<ast::RegisterTypeNode>>>(visitParameter_list(ctx->parameter_list()));
     }
     if (ctx->instructions()) {
       node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctx->instructions()));
@@ -27,8 +27,41 @@ namespace parser {
     return ast::StatementNode(node);
   }
 
+  std::any ASTBuilderVisitor::visitParameter_list(BeautifulAsmParser::Parameter_listContext *ctx) {
+    std::vector<std::shared_ptr<ast::RegisterTypeNode>> param_list;
+    for (auto register_type : ctx->register_type()) {
+      auto param = std::any_cast<ast::RegisterTypeNode>(visitRegister_type(register_type));
+      param_list.push_back(std::make_shared<ast::RegisterTypeNode>(param));
+    }
+    return param_list;
+  }
+
   std::any ASTBuilderVisitor::visitType_definition(BeautifulAsmParser::Type_definitionContext *ctx) {
-    return visitChildren(ctx);
+    ast::TypeNode node;
+    for (auto ctor : ctx->constructor()) {
+      node.ctor = ast::CtorNode{
+        .params{
+          (ctor->parameter_list())
+            ? std::any_cast<std::vector<std::shared_ptr<ast::RegisterTypeNode>>>(visitParameter_list(ctor->parameter_list()))
+            : std::vector<std::shared_ptr<ast::RegisterTypeNode>>()
+        },
+        .body{
+          std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(ctor->instructions()))
+        }
+      };
+    }
+
+    for (auto dtor : ctx->destructor()) {
+      node.dtor = ast::DtorNode{
+        .body{
+          std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(visitInstructions(dtor->instructions()))
+        }
+      };
+    }
+    for (auto field : ctx->field()) {
+      node.fields.push_back(std::make_shared<ast::FieldNode>(std::any_cast<ast::FieldNode>(visitField(field))));
+    }
+    return ast::StatementNode(node);
   }
 
   std::any ASTBuilderVisitor::visitInstructions(BeautifulAsmParser::InstructionsContext *ctx) {
@@ -50,11 +83,18 @@ namespace parser {
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::MemoryNode>(visitChildren(ctx)));
     if (ctx->arrow_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::ArrowInstNode>(visitChildren(ctx)));
+    if (ctx->no_arg_instruction())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::NoArgNode>(visitChildren(ctx)));
     return nullptr;
   }
   
   std::any ASTBuilderVisitor::visitNo_arg_instruction(BeautifulAsmParser::No_arg_instructionContext *ctx) {
-
+    auto text = ctx->getText();
+    if      (text == "trap") return ast::NoArgNode{ .op = ast::NoArgOperator::kTrap };
+    else if (text == "ret") return ast::NoArgNode{ .op = ast::NoArgOperator::kRet };
+    else if (text == "break") return ast::NoArgNode{ .op = ast::NoArgOperator::kBreak };
+    else if (text == "continue") return ast::NoArgNode{ .op = ast::NoArgOperator::kContinue };
+    return {};
   }
 
   std::any ASTBuilderVisitor::visitArrow_instruction(BeautifulAsmParser::Arrow_instructionContext *ctx) {
@@ -136,7 +176,7 @@ namespace parser {
     ast::LValueNode node;
     if      (text.starts_with("l"))  { node.category = ast::RegisterCategory::Local;         node.register_id = std::stoi(text.substr(1)); }
     else if (text.starts_with("p"))  { node.category = ast::RegisterCategory::Param;         node.register_id = std::stoi(text.substr(1)); }
-    else if (text.starts_with("o"))  { node.category = ast::RegisterCategory::OutgoingParam; node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("op"))  { node.category = ast::RegisterCategory::OutgoingParam; node.register_id = std::stoi(text.substr(2)); }
     else if (text.starts_with("rr")) { node.category = ast::RegisterCategory::Return;        node.register_id = std::stoi(text.substr(2)); }
     else if (text.starts_with("sr")) { node.category = ast::RegisterCategory::Static;        node.register_id = std::stoi(text.substr(2)); }
     return node;
@@ -168,13 +208,44 @@ namespace parser {
   }
 
   std::any ASTBuilderVisitor::visitAny_field(BeautifulAsmParser::Any_fieldContext *ctx) {
-    return ast::MemberNode{ .obj{std::any_cast<ast::RValueNode>(visitAny_rvalue(ctx->any_rvalue()))}, .field{ast::IdNode{.id = ctx->ID()->getText()}} };
+    return ast::MemberNode{
+      .obj{std::any_cast<ast::RValueNode>(visitAny_rvalue(ctx->any_rvalue()))},
+      .type{ast::IdNode{.id = ctx->type_name->getText()}},
+      .field{ast::IdNode{.id = ctx->field_name->getText()}}
+    };
   }
 
   std::any ASTBuilderVisitor::visitObject_type(BeautifulAsmParser::Object_typeContext *ctx) {
-    if (ctx->ID())
-      return ast::ObjectTypeNode{ ast::IdNode{ .id = ctx->ID()->getText() } };
-    return {};
+    auto text = ctx->getText();
+    if      (text.starts_with("long")) { return ast::ObjectTypeNode{ ast::LongNode() }; }
+    else if (text.starts_with("double")) { return ast::ObjectTypeNode{ ast::DoubleNode() }; }
+    else if (text.starts_with("ptr"))    {
+      auto element_type = std::any_cast<ast::ObjectTypeNode>(visitObject_type(ctx->object_type()));
+      return ast::ObjectTypeNode{ ast::PtrNode{
+        .element_type{ std::make_shared<ast::ObjectTypeNode>(element_type) }
+      }};
+    }
+    return ast::ObjectTypeNode{ ast::IdNode{ .id = ctx->ID()->getText() } };
+  }
+
+  std::any ASTBuilderVisitor::visitRegister_type(BeautifulAsmParser::Register_typeContext *ctx) {
+    auto text = ctx->getText();
+    if      (text.starts_with("long"))   { return ast::RegisterTypeNode{ ast::LongNode() }; }
+    else if (text.starts_with("double")) { return ast::RegisterTypeNode{ ast::DoubleNode() }; }
+    else if (text.starts_with("ptr"))    {
+      auto element_type = std::any_cast<ast::ObjectTypeNode>(visitObject_type(ctx->object_type()));
+      return ast::RegisterTypeNode{ ast::PtrNode{
+        .element_type{ std::make_shared<ast::ObjectTypeNode>(element_type) }
+      }};
+    }
+    return {}; 
+  }
+
+  std::any ASTBuilderVisitor::visitField(BeautifulAsmParser::FieldContext *ctx) {
+    return ast::FieldNode{
+      .id = ast::IdNode{ .id = ctx->ID()->getText() },
+      .type{std::any_cast<ast::RegisterTypeNode>(visitRegister_type(ctx->register_type()))}
+    };
   }
 
 }

@@ -7,6 +7,7 @@ namespace parser {
     public:
       virtual std::any visitProgram(BeautifulAsmParser::ProgramContext *ctx);
       virtual std::any visitFunction_definition(BeautifulAsmParser::Function_definitionContext *ctx);
+      virtual std::any visitParameter_list(BeautifulAsmParser::Parameter_listContext *ctx);
       virtual std::any visitType_definition(BeautifulAsmParser::Type_definitionContext *ctx);
       virtual std::any visitInstruction(BeautifulAsmParser::InstructionContext *ctx);
       virtual std::any visitInstructions(BeautifulAsmParser::InstructionsContext *ctx);
@@ -28,5 +29,7 @@ namespace parser {
       virtual std::any visitAny_number(BeautifulAsmParser::Any_numberContext *ctx);
       virtual std::any visitAny_field(BeautifulAsmParser::Any_fieldContext *ctx);
       virtual std::any visitObject_type(BeautifulAsmParser::Object_typeContext *ctx);
+      virtual std::any visitRegister_type(BeautifulAsmParser::Register_typeContext *ctx);
+      virtual std::any visitField(BeautifulAsmParser::FieldContext *ctx);
   };
 }

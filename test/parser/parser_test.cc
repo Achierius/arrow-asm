@@ -66,4 +66,15 @@ TEST(ParserTest, ParserTestArrow) {
     EXPECT_TRUE(std::holds_alternative<ast::ArrowInstNode>(*func.body[0]));
     EXPECT_TRUE(std::holds_alternative<ast::ArrowInstNode>(*func.body[1]));
 }
+
+TEST(ParserTest, ParserTestTypes) {
+    std::ifstream stream("./test/test_programs/types.aasm", std::ios::in);
+    std::stringstream ss;
+    ss << stream.rdbuf();
+
+    auto ast = parser::ParseFullProgram(ss.str());
+    EXPECT_EQ(ast.statements.size(), 2);
+    EXPECT_TRUE(std::holds_alternative<ast::TypeNode>(*ast.statements[0]));
+    EXPECT_TRUE(std::holds_alternative<ast::TypeNode>(*ast.statements[0]));
+}
 }

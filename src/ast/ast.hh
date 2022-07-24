@@ -23,7 +23,6 @@ enum AstNodeType {
   kId,
   kRegisterType,
   kObjectType,
-  kParam,
   kLong,
   kDouble,
   kPtr,
@@ -109,6 +108,7 @@ struct LValueNode : public AstNode<kLValue>, public RegisterNode {};
 struct RValueNode : public AstNode<kRValue>, public RegisterNode {};
 struct MemberNode : public AstNode<kField> {
   RValueNode obj;
+  IdNode type;
   IdNode field;
 };
 struct ArrowLhsNode : public AstNode<kArrowLhs>, public std::variant<std::monostate, LValueNode, MemberNode> {
@@ -203,10 +203,9 @@ struct InstructionNode : public AstNode<kInstruction>,
 };
 
 // Function nodes
-struct ParamNode : public AstNode<kParam>, public RegisterTypeNode {};
 struct FunctionNode : public AstNode<kFunction> {
   IdNode id;
-  std::vector<std::shared_ptr<ParamNode>> params;
+  std::vector<std::shared_ptr<RegisterTypeNode>> params;
   std::vector<std::shared_ptr<InstructionNode>> body;
 };
 
@@ -216,6 +215,7 @@ struct FieldNode : public AstNode<kField> {
   RegisterTypeNode type;
 };
 struct CtorNode : public AstNode<kCtor> {
+  std::vector<std::shared_ptr<RegisterTypeNode>> params;
   std::vector<std::shared_ptr<InstructionNode>> body;
 };
 struct DtorNode : public AstNode<kDtor> {

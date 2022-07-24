@@ -52,8 +52,9 @@ enum AstNodeType {
 
 template <AstNodeType node_type> struct AstNode {
   constexpr static AstNodeType type = node_type;
-  //
-  // std::string_view source_location; // TODO(marcus@)
+  // TODO @j1ah0ng This is a string until we can somehow get a sane view into
+  // underyling source file using literal col/row pos
+  std::string sourcePos;
 };
 
 struct NopNode : public AstNode<kNop> {};
@@ -78,12 +79,14 @@ struct RegisterTypeNode
       public std::variant<std::monostate, LongNode, DoubleNode, PtrNode> {
   // using std::variant<std::monostate, LongNode, DoubleNode,
   // PtrNode>::operator==;
+  using AstNode::sourcePos;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::variant;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode>::operator=;
 };
 struct ObjectTypeNode : public AstNode<kObjectType>,
                         public std::variant<std::monostate, LongNode,
                                             DoubleNode, PtrNode, IdNode> {
+  using AstNode::sourcePos;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode,
                      IdNode>::variant;
   using std::variant<std::monostate, LongNode, DoubleNode, PtrNode,
@@ -99,8 +102,12 @@ struct RegisterNode : public AstNode<kRegister> {
 };
 
 // Instruction nodes
-struct LValueNode : public AstNode<kLValue>, public RegisterNode {};
-struct RValueNode : public AstNode<kRValue>, public RegisterNode {};
+struct LValueNode : public AstNode<kLValue>, public RegisterNode {
+  using AstNode<kLValue>::sourcePos;
+};
+struct RValueNode : public AstNode<kRValue>, public RegisterNode {
+  using AstNode<kRValue>::sourcePos;
+};
 struct MemberNode : public AstNode<kField> {
   RValueNode obj;
   IdNode type;
@@ -109,6 +116,7 @@ struct MemberNode : public AstNode<kField> {
 struct ArrowLhsNode
     : public AstNode<kArrowLhs>,
       public std::variant<std::monostate, LValueNode, MemberNode> {
+  using AstNode::sourcePos;
   using std::variant<std::monostate, LValueNode, MemberNode>::variant;
   using std::variant<std::monostate, LValueNode, MemberNode>::operator=;
 };
@@ -119,6 +127,7 @@ struct MakeNode : public AstNode<kMake> {
 struct ArrowRhsNode
     : public AstNode<kArrowRhs>,
       public std::variant<std::monostate, RValueNode, MemberNode, MakeNode> {
+  using AstNode::sourcePos;
   using std::variant<std::monostate, RValueNode, MemberNode, MakeNode>::variant;
   using std::variant<std::monostate, RValueNode, MemberNode,
                      MakeNode>::operator=;
@@ -129,12 +138,14 @@ struct ArrowInstNode : public AstNode<kArrow> {
 };
 struct ImmediateNode : public AstNode<kImm>,
                        public std::variant<std::monostate, int64_t, double> {
+  using AstNode::sourcePos;
   using std::variant<std::monostate, int64_t, double>::variant;
   using std::variant<std::monostate, int64_t, double>::operator=;
 };
 struct ArgNode
     : public AstNode<kArg>,
       public std::variant<std::monostate, RValueNode, ImmediateNode> {
+  using AstNode::sourcePos;
   using std::variant<std::monostate, RValueNode, ImmediateNode>::variant;
   using std::variant<std::monostate, RValueNode, ImmediateNode>::operator=;
 };

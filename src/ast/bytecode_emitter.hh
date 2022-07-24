@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast.hh"
+#include "src/ast/ast.hh"
 #include "src/bytecode/bytecode.hh"
 #include "src/bytecode/opcodes.hh"
 

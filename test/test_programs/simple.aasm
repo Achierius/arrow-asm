@@ -1,3 +1,3 @@
-fn test_add(long) {
-    add l0, l1, l2
+fn test_double(long) {
+    add rr0, p0, p0
 }

@@ -13,7 +13,6 @@ TEST(ParserTest, ParserTestSimple) {
     std::stringstream ss;
     ss << stream.rdbuf();
 
-    std::cout << ss.str() << std::endl;
     auto ast = parser::ParseFullProgram(ss.str());
 }
 }

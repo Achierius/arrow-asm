@@ -10,6 +10,7 @@ cc_library(
     srcs = ["bytecode_emitter.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//src/ast:ast",
         "//src/bytecode:bytecode",
     ],
 )

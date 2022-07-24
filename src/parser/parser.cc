@@ -16,16 +16,5 @@ ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
 
   auto program = parser.program();
   ASTBuilderVisitor visitor;
-  visitor.visitProgram(program);
-
-  return {};
-
-  // TODO antlr
-  if (program_text == "nop\n") {
-    ast::ProgramNode program_node {
-      .statements{std::make_shared<ast::StatementNode>(ast::NopNode{})},
-    };
-    return program_node;
-  }
-  return {};
+  return std::any_cast<ast::ProgramNode>(visitor.visitProgram(program));
 };

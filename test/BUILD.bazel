@@ -73,3 +73,17 @@ cc_test(
     ],
     data = glob(["test_programs/**"]),
 )
+
+cc_test(
+    name = "ast_test",
+    srcs = [
+        "ast/lower_ast_test.cc"
+    ],
+    deps = [
+        "@com_github_google_googletest//:gtest",
+        "@com_github_google_googletest//:gtest_main",
+        "//src/parser:parser",
+        "//src/ast:bytecode_emitter",
+    ],
+    data = glob(["test_programs/**"]),
+)

@@ -1,9 +1,16 @@
 cc_library(
     name = "ast",
-    hdrs = ["ast.hh", "bytecode_emitter.hh"],
+    hdrs = ["ast.hh"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "bytecode_emitter",
+    hdrs = ["bytecode_emitter.hh"],
     srcs = ["bytecode_emitter.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//src/ast:ast",
         "//src/bytecode:bytecode",
     ],
 )

@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "src/ast/ast.hh"
+#include "src/parser/ast_builder_visitor.hh"
 
 
 ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
@@ -13,12 +14,7 @@ ast::ProgramNode parser::ParseFullProgram(std::string program_text) {
   antlr4::CommonTokenStream tokens(&lexer);
   parser::BeautifulAsmParser parser(&tokens);
 
-  // TODO antlr
-  if (program_text == "nop\n") {
-    ast::ProgramNode program_node {
-      .statements{std::make_shared<ast::StatementNode>(ast::NopNode{})},
-    };
-    return program_node;
-  }
-  return {};
+  auto program = parser.program();
+  ASTBuilderVisitor visitor;
+  return std::any_cast<ast::ProgramNode>(visitor.visitProgram(program));
 };

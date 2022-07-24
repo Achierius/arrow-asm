@@ -1,5 +1,7 @@
 grammar BeautifulAsm;
 
+program : (statement)*;
+
 RREG  : 'rr'[0-9]+;
 LREG  : 'l'[0-9]+;
 IPREG : 'p'[0-9]+;
@@ -11,15 +13,15 @@ ID  : [_a-z]+[_a-z0-9]*;
 INT_NUM : [-]?('0' | [1-9][0-9]*);
 FLOAT_NUM : INT_NUM '.' ([0-9]*[1-9])?;
 
-WS      : [ \t\r\n]+ -> skip;
-NEWLINE : '\r'? '\n';
+WS  : [ \t\r\n]+ -> skip;
 COMMENT : [;][^\r\n]* -> skip;
 
 any_number : INT_NUM | FLOAT_NUM;
 
 ARROW : '<-';
 
-program : statement*;
+FN   : 'fn';
+TYPE : 'type';
 
 statement : function_definition
           | type_definition;
@@ -27,26 +29,28 @@ statement : function_definition
 any_lvalue : RREG | LREG | IPREG | OPREG;
 any_rvalue : LREG | IPREG | OPREG | SREG;
 
-register_type : 'long'
-              | 'double'
-              | 'ptr' '<' datatype=object_type '>';
+LONG   : 'long';
+DOUBLE : 'double';
+PTR    : 'ptr';
+
+register_type : LONG
+              | DOUBLE 
+              | PTR '<' datatype=object_type '>';
 
 object_type : ID
             | register_type;
 
-type_definition : 'type' name=ID '{' (constructor | destructor | field)* '}';
+type_definition : TYPE name=ID '{' (constructor | destructor | field)* '}';
 
 CTOR : 'ctor';
 DTOR : 'dtor';
-constructor : CTOR '{' instructions '}';
-destructor  : DTOR '{' instructions '}';
+constructor : CTOR '{' function_body '}';
+destructor  : DTOR '{' function_body '}';
 
 field : field_name=ID ':' field_type=register_type;
 
-function_definition : 'fn' name=ID parameter_list? '{' instructions '}';
 parameter_list : '(' type=register_type (',' type=register_type)* ')';
-
-instructions : instruction*;
+function_definition : FN name=ID parameter_list? '{' instruction* '}';
 
 instruction : arrow_instruction
             | no_arg_instruction
@@ -56,15 +60,15 @@ instruction : arrow_instruction
 
 no_arg_instruction          : operator=no_arg_operator;
 arrow_instruction           : lhs=arrow_lhs ARROW rhs=arrow_rhs;
-print_instruction            : 'print' arg1=any_argument;
-binary_operator_instruction : binary_operator arg1=any_lvalue ',' arg2=any_argument ',' arg3=any_argument;
-memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_destination;
+print_instruction           : 'print' arg1=any_argument;
+binary_operator_instruction : operator=binary_operator arg1=any_lvalue ',' arg2=any_argument ',' arg3=any_argument;
+memory_instruction          : operator=memory_operator arg1=any_lvalue ',' arg2=memory_destination;
 
 IF : 'if';
 ELSE : 'else';
-if_statement : IF condition=any_argument '{' instructions '}' elif_branch* else_branch?;
-elif_branch  : ELSE condition=any_argument '{' instructions '}';
-else_branch  : ELSE '{' instructions '}';
+if_statement : IF condition=any_argument '{' instruction* '}' elif_branch* else_branch?;
+elif_branch  : ELSE condition=any_argument '{' instruction* '}';
+else_branch  : ELSE '{' instruction* '}';
 
 any_argument : any_rvalue | any_number;
 
@@ -75,7 +79,8 @@ arrow_rhs : make_constructor
           | any_rvalue
           | any_field;
 
-make_constructor : 'make' type=ID (any_argument)*;
+MAKE : 'make';
+make_constructor : MAKE type=ID (any_argument)*;
 
 any_field : any_rvalue '.' field_name=ID;
 

@@ -1,1 +1,3 @@
-sr
+fn test_double(long) {
+    add rr0, p0, p0
+}

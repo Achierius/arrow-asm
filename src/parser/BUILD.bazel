@@ -4,11 +4,11 @@ cc_library(
     name = "parser",
     hdrs = [
         "parser.hh",
-        # "ast_builder_visitor.hh",
+        "ast_builder_visitor.hh",
     ],
     srcs = [
         "parser.cc",
-        # "ast_builder_visitor.cc",
+        "ast_builder_visitor.cc",
     ],
     visibility = ["//visibility:public"],
     deps = [

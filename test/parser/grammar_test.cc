@@ -8,18 +8,12 @@
 
 namespace {
 TEST(ParserTest, GrammarTestSimple) {
-  static constexpr auto test_add =
-    "fn test_add(long, long) { \
-      add p0, p0, p1 \
-      ret \
-    }";
-  // std::fstream stream("test/test_programs/simple.aasm");
-  std::stringstream stream(test_add);
+  std::ifstream stream("./test/test_programs/simple.aasm", std::ios::in);
 
   antlr4::ANTLRInputStream input(stream);
   parser::BeautifulAsmLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
-  // parser::BeautifulAsmParser parser(&tokens);
+  parser::BeautifulAsmParser parser(&tokens);
 
   tokens.fill();
   for (auto token : tokens.getTokens()) {

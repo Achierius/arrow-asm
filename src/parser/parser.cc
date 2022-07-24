@@ -5,7 +5,7 @@
 #include "src/ast/ast.hh"
 
 ast::ProgramNode parser::ParseFullProgram(std::string_view program_text) {
-  std::stringstream stream(program_text;
+  std::stringstream stream(program_text.data());
 
   antlr4::ANTLRInputStream input(stream);
   parser::BeautifulAsmLexer lexer(&input);
@@ -14,10 +14,8 @@ ast::ProgramNode parser::ParseFullProgram(std::string_view program_text) {
 
   // TODO antlr
   if (program_text == "nop\n") {
-    ast::StatementNode statement_node;
-    statement_node = ast::NopNode();
     ast::ProgramNode program_node {
-      .statements{statement_node},
+      .statements{std::make_unique<ast::NopNode>()},
     };
     return program_node;
   }

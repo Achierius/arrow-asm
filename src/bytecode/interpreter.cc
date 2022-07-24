@@ -170,6 +170,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   int cycle_count = 0;     // how many instructions we've executed
   int pc = 0; // within chunk
   int constant_window_base = 0; // within current chunk
+  int global_window_base = 0; // within current chunk
   std::stack<Value> data_stack;
   std::stack<std::pair<int, int>> return_stack; // chunk_idx, pc
   Instruction instr;
@@ -178,6 +179,10 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   auto debug_dispatch_hook = [&](){
     spdlog::debug("{:0>6} {:0>8} {:0>16x}: {} {}", cycle_count, chunk_idx,
                   pc, instr.opcode, instr.param);
+    if (pc >= chunks[chunk_idx].code.size()) {
+      spdlog::critical("overran end of bytecode chunk");
+      std::abort();
+    }
     cycle_count++;
   };
 
@@ -277,16 +282,30 @@ BiasConstantWindow: {
   DISPATCH();
 }
 LoadGlobal: {
-  // TODO
-  goto BadOpcode;
+  auto& globals = executable.globals;
+  int index = global_window_base + static_cast<int8_t>(instr.param);
+  if (globals.size() <= index) {
+    spdlog::error("access to uninitialized global value at index {}", index);
+    spdlog::debug("resizing global-cache to {} elements", index + 1);
+    globals.resize(index + 1);
+    globals[index] = 0;
+  }
+  Push(globals[index]);
+  DISPATCH();
 }
 BiasGlobalWindow: {
-  // TODO
-  goto BadOpcode;
+  global_window_base += static_cast<int8_t>(instr.param);
+  DISPATCH();
 }
 StoreGlobal: {
-  // TODO
-  goto BadOpcode;
+  auto& globals = executable.globals;
+  int index = global_window_base + static_cast<int8_t>(instr.param);
+  if (globals.size() <= index) {
+    spdlog::debug("resizing global-cache to {} elements", index + 1);
+    globals.resize(index + 1);
+  }
+  globals[index] = Pop();
+  DISPATCH();
 }
 Dup:
   Push(Peek());
@@ -308,16 +327,20 @@ Rot3: {
   DISPATCH();
 }
 LogicalAndLong: {
-  // TODO
-  goto BadOpcode;
+  long tos {Pop()};
+  long tos1 {Pop()};
+  Push(tos1 & tos);
+  DISPATCH();
 }
 LogicalOrLong: {
-  // TODO
-  goto BadOpcode;
+  long tos {Pop()};
+  long tos1 {Pop()};
+  Push(tos1 | tos);
+  DISPATCH();
 }
 UnaryNegate: {
-  // TODO
-  goto BadOpcode;
+  Push(-Pop());
+  DISPATCH();
 }
 AddFloat: {
   // TODO
@@ -336,12 +359,20 @@ DivFloat: {
   goto BadOpcode;
 }
 Jump: {
-  // TODO
-  goto BadOpcode;
+  pc += static_cast<int8_t>(instr.param);
+  spdlog::debug("jumping to pc {}", pc);
+  DISPATCH_NO_INCR_PC();
 }
 TestAndJump: {
-  // TODO
-  goto BadOpcode;
+  Value test = Pop();
+  if (test) {
+    pc += static_cast<int8_t>(instr.param);
+    spdlog::debug("test {}: jumping to pc {:0>16x}", test, pc);
+  } else {
+    spdlog::debug("test {}: not jumping", test);
+    pc ++;
+  }
+  DISPATCH_NO_INCR_PC();
 }
 Call: {
   // TODO
@@ -368,16 +399,21 @@ StoreObjectField: {
   goto BadOpcode;
 }
 Deallocate: {
-  // TODO
-  goto BadOpcode;
+  intptr_t ptr = Pop();
+  delete[] reinterpret_cast<std::byte*>(ptr);
+  DISPATCH();
 }
 Allocate: {
-  // TODO
-  goto BadOpcode;
+  size_t size = Pop();
+  intptr_t ptr = reinterpret_cast<intptr_t>(new std::byte[size]);
+  Push(ptr);
+  DISPATCH();
 }
 AllocateImm: {
-  // TODO
-  goto BadOpcode;
+  size_t size = instr.param;
+  intptr_t ptr = reinterpret_cast<intptr_t>(new std::byte[size]);
+  Push(ptr);
+  DISPATCH();
 }
 
   __builtin_unreachable();

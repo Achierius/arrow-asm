@@ -153,6 +153,7 @@ struct CallNode : public AstNode<kCallInst> {
 // NoRetNode
 enum class NoRetOperator {
   kPrint,
+  kPrintChar,
   kExit,
 };
 struct NoRetNode : public AstNode<kNoRetInst> {

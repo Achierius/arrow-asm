@@ -77,7 +77,7 @@ namespace parser {
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::BinaryNode>(visitChildren(ctx)));
     if (ctx->call_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::CallNode>(visitChildren(ctx)));
-    if (ctx->print_instruction() || ctx->exit_instruction())
+    if (ctx->print_instruction() || ctx->printch_instruction() || ctx->exit_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::NoRetNode>(visitChildren(ctx)));
     if (ctx->memory_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::MemoryNode>(visitChildren(ctx)));
@@ -134,6 +134,10 @@ namespace parser {
   
   std::any ASTBuilderVisitor::visitPrint_instruction(BeautifulAsmParser::Print_instructionContext *ctx) {
     return ast::NoRetNode{ .op = ast::NoRetOperator::kPrint, .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx)) };
+  }
+
+  std::any ASTBuilderVisitor::visitPrintch_instruction(BeautifulAsmParser::Printch_instructionContext *ctx) {
+    return ast::NoRetNode{ .op = ast::NoRetOperator::kPrintChar, .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx)) };
   }
 
   std::any ASTBuilderVisitor::visitExit_instruction(BeautifulAsmParser::Exit_instructionContext *ctx) {

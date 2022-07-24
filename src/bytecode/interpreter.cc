@@ -84,7 +84,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&Exit,
     &&Breakpoint,
     &&PrintLong,
-    EMPTY_OPCODE,
+    &&PrintChar,
     EMPTY_OPCODE,
     EMPTY_OPCODE,
     EMPTY_OPCODE,
@@ -250,7 +250,14 @@ Breakpoint:
 PrintLong: {
   Value val = Pop();
 
-  std::cout << std::dec << val;
+  std::cout << std::dec << val << std::endl;
+  DISPATCH();
+}
+PrintChar: {
+  Value val = Pop();
+  if (val >= 128)
+    spdlog::error("only ascii characters are supported");
+  std::cout << (char) val;
   DISPATCH();
 }
 Nop:

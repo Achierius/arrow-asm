@@ -333,6 +333,17 @@ void HandleInstruction(bytecode::BytecodeExecutable& exe, bytecode::BytecodeChun
         });
         break;
       }
+      case ast::NoRetOperator::kPrintChar: {
+        auto const& arg = node.arg;
+        EmitArg(chunk, ctx, arg);
+        // TODO: type checking
+        ctx.pop_top();
+        Emit(chunk, bytecode::Instruction{
+          .opcode = bytecode::Opcode::kPrintChar,
+          .param = 0
+        });
+        break;
+      }
       case ast::NoRetOperator::kExit: {
         auto const& arg = node.arg;
         EmitArg(chunk, ctx, arg);

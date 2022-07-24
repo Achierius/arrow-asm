@@ -86,4 +86,13 @@ TEST(ParserTest, ParserTestBranch) {
     auto ast = parser::ParseFullProgram(ss.str());
 }
 
+TEST(ParserTest, ParserTestComplex) {
+    std::ifstream stream("./test/test_programs/test_complex_type.aasm", std::ios::in);
+    std::stringstream ss;
+    ss << stream.rdbuf();
+
+    auto ast = parser::ParseFullProgram(ss.str());
+}
+
+
 }

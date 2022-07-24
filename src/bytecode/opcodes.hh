@@ -35,11 +35,14 @@ enum Opcode {
   kLoadGlobal = 0x43,
   kStoreGlobal = 0x44,
   kBiasGlobalWindow = 0x45,
+  kStoreAuxiliary = 0x46,
+  kLoadAuxiliary = 0x47,
 
   // Stack manipulation
   kDup = 0x60,
-  kRot2 = 0x61,
-  kRot3 = 0x62,
+  kDup2 = 0x61,
+  kRot2 = 0x62,
+  kRot3 = 0x63,
 
   // Control flow
   kJump = 0x70, // jumps to pc + 1 + IMM

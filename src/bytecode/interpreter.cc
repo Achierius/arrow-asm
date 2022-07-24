@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <array>
+#include <deque>
 #include <stack>
 #include <iostream>
 
@@ -122,16 +123,16 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&LoadGlobal,
     &&StoreGlobal,
     &&BiasGlobalWindow,
-    EMPTY_OPCODE,
-    EMPTY_OPCODE,
+    &&StoreAuxiliary,
+    &&LoadAuxiliary,
     EMPTY_OPCODES_8(),
     /********** 0x50 **********/
     EMPTY_OPCODES_16(),
     /********** 0x60 **********/
     &&Dup,
+    &&Dup2,
     &&Rot2,
     &&Rot3,
-    EMPTY_OPCODE,
     EMPTY_OPCODES_12(),
     /********** 0x70 **********/
     &&Jump,
@@ -172,7 +173,9 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   int constant_window_base = 0; // within current chunk
   int global_window_base = 0; // within current chunk
   std::stack<Value> data_stack;
-  std::stack<std::pair<int, int>> return_stack; // chunk_idx, pc
+  std::deque<Value> auxiliary_stack(64); // TODO magic number
+  struct StackFrame { int pc; int chunk_idx; int constant_window_base; int global_window_base; };
+  std::stack<StackFrame> return_stack;
   Instruction instr;
 
   // debug-only hook that gets called every time we dispatch to let us log stuff
@@ -310,6 +313,14 @@ StoreGlobal: {
 Dup:
   Push(Peek());
   DISPATCH();
+Dup2: {
+  Value tos = Pop();
+  Value tos1 = Peek();
+  Push(tos);
+  Push(tos1);
+  Push(tos);
+  DISPATCH();
+}
 Rot2: {
   Value tos {Pop()};
   Value tos1 {Pop()};
@@ -375,12 +386,30 @@ TestAndJump: {
   DISPATCH_NO_INCR_PC();
 }
 Call: {
-  // TODO
-  goto BadOpcode;
+  return_stack.push({.pc = pc, .chunk_idx = chunk_idx, .constant_window_base = constant_window_base, .global_window_base = global_window_base});
+  pc = 0;
+  chunk_idx = Pop();
+  constant_window_base = 0;
+  global_window_base = 0;
+  for (int i = 0; i < 48; i++) { // better way to do this??
+    auxiliary_stack.push_front(0);
+  }
+  spdlog::debug("calling into chunk {}", chunk_idx);
+  DISPATCH_NO_INCR_PC();
 }
 Return: {
   // TODO
-  goto BadOpcode;
+  auto frame = return_stack.top();
+  return_stack.pop();
+  pc = frame.pc;
+  chunk_idx = frame.chunk_idx;
+  constant_window_base = frame.constant_window_base;
+  global_window_base = frame.global_window_base;
+  for (int i = 0; i < 48; i++) { // better way to do this??
+    auxiliary_stack.pop_front();
+  }
+  spdlog::debug("returning to chunk {}", chunk_idx);
+  DISPATCH_NO_INCR_PC();
 }
 LoadClassConstructor: {
   // TODO
@@ -413,6 +442,14 @@ AllocateImm: {
   size_t size = instr.param;
   intptr_t ptr = reinterpret_cast<intptr_t>(new std::byte[size]);
   Push(ptr);
+  DISPATCH();
+}
+LoadAuxiliary: {
+  Push(auxiliary_stack.at(instr.param));
+  DISPATCH();
+}
+StoreAuxiliary: {
+  auxiliary_stack.at(instr.param) = Pop();
   DISPATCH();
 }
 

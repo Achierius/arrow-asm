@@ -161,6 +161,18 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     cycle_count++;
   };
 
+  auto Pop = [&stack]() -> Value {
+    Value val = stack.top();
+    stack.pop();
+    return val;
+  };
+  auto Peek = [&stack]() -> Value {
+    return stack.top();
+  };
+  auto Push = [&stack](Value val) {
+    stack.push(val);
+  };
+
   DISPATCH_NO_INCR_PC(); // kick it off and it'll drive itself
 
 BadOpcode:
@@ -171,13 +183,13 @@ Trap:
   spdlog::critical("user code trap");
   std::abort();
 Return:
-  return stack.top();
+  return Peek();
 Breakpoint:
   // TODO unimplemented
   goto BadOpcode;
 PrintLong: {
-  Value val = stack.top();
-  stack.pop();
+  Value val = Pop();
+
   std::cout << std::dec << val;
   DISPATCH();
 }
@@ -262,6 +274,7 @@ Rot3: {
   Push(tos);
   Push(tos2);
   DISPATCH();
+}
 
   __builtin_unreachable();
 }

@@ -16,7 +16,7 @@ fn main {
   add op0, 0, 15
   call test
   print op0
-  trap
+  exit 0
 }
 
 fn test(long) {

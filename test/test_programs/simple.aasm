@@ -15,10 +15,12 @@ fn main {
   }
   add op0, 0, 15
   call test
+  print op0
   trap
 }
 
 fn test(long) {
   print p0
+  add rr0, p0, 19
   ret
 }

@@ -197,7 +197,7 @@ namespace parser {
     ast::RValueNode node;
     if      (text.starts_with("l"))  { node.category = ast::RegisterCategory::Local;         node.register_id = std::stoi(text.substr(1)); }
     else if (text.starts_with("p"))  { node.category = ast::RegisterCategory::Param;         node.register_id = std::stoi(text.substr(1)); }
-    else if (text.starts_with("o"))  { node.category = ast::RegisterCategory::OutgoingParam; node.register_id = std::stoi(text.substr(1)); }
+    else if (text.starts_with("op"))  { node.category = ast::RegisterCategory::OutgoingParam; node.register_id = std::stoi(text.substr(2)); }
     else if (text.starts_with("rr")) { node.category = ast::RegisterCategory::Return;        node.register_id = std::stoi(text.substr(2)); }
     else if (text.starts_with("sr")) { node.category = ast::RegisterCategory::Static;        node.register_id = std::stoi(text.substr(2)); }
     return node;

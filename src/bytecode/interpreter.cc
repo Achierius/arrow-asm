@@ -74,14 +74,9 @@
   &&BadOpcode
 
 int bytecode::InterpretBytecode(BytecodeExecutable executable) {
-  // first we have to assemble the executable into something coherent
-  // but I won't do that right now, so instead
-  // TODO support more than one chunk
   auto& chunks = executable.chunks;
-  assert(chunks.size() == 1);
-
   auto& symtab = executable.symbol_table;
-  // also don't support symbols yet TODO
+  // don't support symbols yet TODO
   assert(symtab.size() == 0);
 
   std::array<void*, 256> opcode_dispatch_table = {
@@ -133,7 +128,11 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&Dup2,
     &&Rot2,
     &&Rot3,
-    EMPTY_OPCODES_12(),
+    &&Drop,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODE,
+    EMPTY_OPCODES_8(),
     /********** 0x70 **********/
     &&Jump,
     &&TestAndJump,
@@ -181,7 +180,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   // debug-only hook that gets called every time we dispatch to let us log stuff
   auto debug_dispatch_hook = [&](){
     spdlog::debug("{:0>6} {:0>8} {:0>16x}: {} {}", cycle_count, chunk_idx,
-                  pc, instr.opcode, instr.param);
+                  pc * 2, instr.opcode, instr.param);
     if (pc >= chunks[chunk_idx].code.size()) {
       spdlog::critical("overran end of bytecode chunk");
       std::abort();
@@ -205,7 +204,7 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
 
 BadOpcode:
   // TODO spdlog this
-  spdlog::critical("bad opcode at {:0>8}:{:0>16x}", chunk_idx, pc);
+  spdlog::critical("bad opcode at {:0>8}:{:0>16x}", chunk_idx, pc * 2);
   std::abort();
 Trap:
   spdlog::critical("user code trap");
@@ -337,6 +336,9 @@ Rot3: {
   Push(tos2);
   DISPATCH();
 }
+Drop:
+  Pop();
+  DISPATCH();
 LogicalAndLong: {
   long tos {Pop()};
   long tos1 {Pop()};
@@ -394,21 +396,21 @@ Call: {
   for (int i = 0; i < 48; i++) { // better way to do this??
     auxiliary_stack.push_front(0);
   }
-  spdlog::debug("calling into chunk {}", chunk_idx);
+  spdlog::debug("Call   => Frame [{:>4}]", chunk_idx);
   DISPATCH_NO_INCR_PC();
 }
 Return: {
   // TODO
   auto frame = return_stack.top();
   return_stack.pop();
-  pc = frame.pc;
+  pc = frame.pc + 1;
   chunk_idx = frame.chunk_idx;
   constant_window_base = frame.constant_window_base;
   global_window_base = frame.global_window_base;
   for (int i = 0; i < 48; i++) { // better way to do this??
     auxiliary_stack.pop_front();
   }
-  spdlog::debug("returning to chunk {}", chunk_idx);
+  spdlog::debug("Return => Frame [{:>4}]", chunk_idx);
   DISPATCH_NO_INCR_PC();
 }
 LoadClassConstructor: {

@@ -5,7 +5,7 @@ namespace bytecode {
 enum Opcode {
   // Debug/error ops
   kTrap = 0x00,
-  kExit= 0x01,
+  kExit = 0x01,
   kBreakpoint = 0x02,
   kPrintLong = 0x03,
   kPrintChar = 0x04,
@@ -43,6 +43,7 @@ enum Opcode {
   kDup2 = 0x61,
   kRot2 = 0x62,
   kRot3 = 0x63,
+  kDrop = 0x64,
 
   // Control flow
   kJump = 0x70, // jumps to pc + 1 + IMM

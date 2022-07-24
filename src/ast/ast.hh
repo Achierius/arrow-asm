@@ -40,6 +40,7 @@ enum AstNodeType {
   kCallInst,
   kNoRetInst,
   kNoArgInst,
+  kUnaryInst,
   kBinaryInst,
   kMemoryInst,
   kIfStmt,
@@ -160,6 +161,17 @@ struct NoRetNode : public AstNode<kNoRetInst> {
   NoRetOperator op;
   ArgNode arg;
 };
+// UnaryNode
+enum class UnaryOperator {
+  kANeg,
+  kBNeg,
+  kLNeg,
+};
+struct UnaryNode : public AstNode<kUnaryInst> {
+  LValueNode lhs;
+  ArgNode rhs;
+  UnaryOperator op;
+};
 // BinaryNode
 enum class BinaryOperator {
   kAdd,
@@ -172,6 +184,7 @@ enum class BinaryOperator {
   kSra,
   kAnd,
   kOr,
+  kXor,
 };
 struct BinaryNode : public AstNode<kBinaryInst> {
   LValueNode lhs;
@@ -207,9 +220,9 @@ struct IfNode : public AstNode<kIfStmt> {
 
 struct InstructionNode : public AstNode<kInstruction>,
                          public std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode,
-                                             BinaryNode, MemoryNode, IfNode> {
-  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::variant;
-  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode>::operator=;
+                                             UnaryNode, BinaryNode, MemoryNode, IfNode> {
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode>::variant;
+  using std::variant<std::monostate, ArrowInstNode, CallNode, NoArgNode, NoRetNode, UnaryNode, BinaryNode, MemoryNode, IfNode>::operator=;
 };
 
 // Function nodes

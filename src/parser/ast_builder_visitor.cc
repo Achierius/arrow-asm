@@ -73,6 +73,8 @@ namespace parser {
   }
 
   std::any ASTBuilderVisitor::visitInstruction(BeautifulAsmParser::InstructionContext *ctx) {
+    if (ctx->unary_operator_instruction())
+      return std::make_shared<ast::InstructionNode>(std::any_cast<ast::UnaryNode>(visitChildren(ctx)));
     if (ctx->binary_operator_instruction())
       return std::make_shared<ast::InstructionNode>(std::any_cast<ast::BinaryNode>(visitChildren(ctx)));
     if (ctx->call_instruction())
@@ -144,6 +146,14 @@ namespace parser {
     return ast::NoRetNode{ .op = ast::NoRetOperator::kExit, .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx)) };
   }
 
+  std::any ASTBuilderVisitor::visitUnary_operator_instruction(BeautifulAsmParser::Unary_operator_instructionContext *ctx) {
+    ast::UnaryNode node;
+    node.op = std::any_cast<ast::UnaryOperator>(visitUnary_operator(ctx->unary_operator()));
+    node.lhs = std::any_cast<ast::LValueNode>(visitAny_lvalue(ctx->arg1));
+    node.rhs = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->arg2));
+    return node;
+  }
+
   std::any ASTBuilderVisitor::visitBinary_operator_instruction(BeautifulAsmParser::Binary_operator_instructionContext *ctx) {
     ast::BinaryNode node;
     node.op = std::any_cast<ast::BinaryOperator>(visitBinary_operator(ctx->binary_operator()));
@@ -161,6 +171,13 @@ namespace parser {
     return node;
   }
 
+  std::any ASTBuilderVisitor::visitUnary_operator(BeautifulAsmParser::Unary_operatorContext *ctx) {
+    if (ctx->getText() == "aneg") return ast::UnaryOperator::kANeg;
+    if (ctx->getText() == "bneg") return ast::UnaryOperator::kBNeg;
+    if (ctx->getText() == "lneg") return ast::UnaryOperator::kLNeg;
+    return {};
+  }
+
   std::any ASTBuilderVisitor::visitBinary_operator(BeautifulAsmParser::Binary_operatorContext *ctx) {
     if (ctx->getText() == "add") return ast::BinaryOperator::kAdd;
     if (ctx->getText() == "sub") return ast::BinaryOperator::kSub;
@@ -172,6 +189,7 @@ namespace parser {
     if (ctx->getText() == "sra") return ast::BinaryOperator::kSra;
     if (ctx->getText() == "and") return ast::BinaryOperator::kAnd;
     if (ctx->getText() == "or") return ast::BinaryOperator::kOr;
+    if (ctx->getText() == "xor") return ast::BinaryOperator::kXor;
     return {};
   }
 

@@ -22,14 +22,15 @@ enum Opcode {
   kRightShiftArithmeticLong = 0x18, // pushes TOS1 >>> TOS
   kLogicalAndLong = 0x19,
   kLogicalOrLong = 0x1A,
-  kUnaryNegate = 0x1B,
-  kAddFloat = 0x1C,
-  kSubFloat = 0x1D,
-  kMulFloat = 0x1E,
-  kDivFloat = 0x1F,
+  kAddFloat = 0x1B,
+  kSubFloat = 0x1C,
+  kMulFloat = 0x1D,
+  kDivFloat = 0x1E,
 
-  // Logical not
-  kLogicalNot = 0x20,
+  // Unary Arithmetic operations
+  kLogicalNeg = 0x20,
+  kBinaryNeg = 0x21,
+  kArithmeticNeg = 0x22,
 
   // Loading/storing
   kImmByte = 0x40,

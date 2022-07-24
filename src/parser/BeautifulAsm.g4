@@ -54,6 +54,7 @@ instruction : arrow_instruction
             | printch_instruction
             | exit_instruction
             | call_instruction
+            | unary_operator_instruction
             | binary_operator_instruction
             | memory_instruction
             | if_statement;
@@ -64,6 +65,7 @@ call_instruction            : 'call' ID;
 print_instruction           : 'print' arg1=any_argument;
 printch_instruction         : 'printch' arg1=any_argument;
 exit_instruction            : 'exit' arg1=any_argument;
+unary_operator_instruction  : unary_operator arg1=any_lvalue ',' arg2=any_argument;
 binary_operator_instruction : binary_operator arg1=any_lvalue ',' arg2=any_argument ',' arg3=any_argument;
 memory_instruction          : memory_operator arg1=any_lvalue ',' arg2=memory_destination;
 
@@ -93,6 +95,10 @@ no_arg_operator : 'nop'
                 | 'break'
                 | 'continue';
 
+unary_operator : 'aneg'
+               | 'bneg'
+               | 'lneg';
+
 binary_operator : 'add'
                 | 'sub'
                 | 'mul'
@@ -102,7 +108,8 @@ binary_operator : 'add'
                 | 'srl'
                 | 'sra'
                 | 'and'
-                | 'or';
+                | 'or'
+                | 'xor';
 
 memory_operator : 'load'
                 | 'store';

@@ -101,15 +101,15 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
     &&RightShiftArithmeticLong,
     &&LogicalAndLong,
     &&LogicalOrLong,
-    &&UnaryNegate,
     &&AddFloat,
     &&SubFloat,
     &&MulFloat,
     &&DivFloat,
+    EMPTY_OPCODE,
     /********** 0x20 **********/
-    &&LogicalNot,
-    EMPTY_OPCODE,
-    EMPTY_OPCODE,
+    &&LogicalNeg,
+    &&BinaryNeg,
+    &&ArithmeticNeg,
     EMPTY_OPCODE,
     EMPTY_OPCODES_4(),
     EMPTY_OPCODES_8(),
@@ -391,14 +391,6 @@ LogicalOrLong: {
   Push(tos1 | tos);
   DISPATCH();
 }
-UnaryNegate: {
-  Push(-Pop());
-  DISPATCH();
-}
-LogicalNot: {
-  Push(~Pop() & 1);
-  DISPATCH();
-}
 AddFloat: {
   // TODO
   goto BadOpcode;
@@ -410,6 +402,18 @@ SubFloat: {
 MulFloat: {
   // TODO
   goto BadOpcode;
+}
+ArithmeticNeg: {
+  Push(-Pop());
+  DISPATCH();
+}
+BinaryNeg: {
+  Push(~Pop());
+  DISPATCH();
+}
+LogicalNeg: {
+  Push(!Pop());
+  DISPATCH();
 }
 DivFloat: {
   // TODO

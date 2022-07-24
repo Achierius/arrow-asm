@@ -206,7 +206,7 @@ void EmitIf(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& ch
     // First, we handle our if condition
     EmitArg(chunk, ctx, *condition);
     Emit(chunk, bytecode::Instruction{
-      .opcode = bytecode::kLogicalNot,
+      .opcode = bytecode::kLogicalNeg,
       .param = 0
     });
     // We need to negate so that TestAndJump jumps us if we do NOT match
@@ -345,6 +345,34 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
         // TODO: ERROR
         break;
     }
+  } else if (std::holds_alternative<ast::UnaryNode>(instr)) {
+    auto const& node = std::get<ast::UnaryNode>(instr);
+    auto const& arg = node.rhs;
+    EmitArg(chunk, ctx, arg);
+    switch (node.op) {
+      case ast::UnaryOperator::kANeg: 
+        EmitNoParam(chunk, bytecode::Opcode::kArithmeticNeg);
+        break;
+      case ast::UnaryOperator::kBNeg: 
+        EmitNoParam(chunk, bytecode::Opcode::kBinaryNeg);
+        break;
+      case ast::UnaryOperator::kLNeg: 
+        EmitNoParam(chunk, bytecode::Opcode::kLogicalNeg);
+        break;
+      default:
+        // TODO: ERROR (Unsupported unary inst)
+        break;
+    }
+    // Pop both arguments from our 'top' stack
+    ctx.pop_top();
+    // Emit the store
+    auto dst = TranslateRegister(node.lhs);
+    Emit(chunk, bytecode::Instruction{
+      .opcode = bytecode::Opcode::kStoreAuxiliary,
+      .param = dst
+    });
+    // TODO: Properly handle type assignment
+    ctx.reg_types[dst] = ast::LongNode();
   } else if (std::holds_alternative<ast::BinaryNode>(instr)) {
     auto const& node = std::get<ast::BinaryNode>(instr);
     auto const& arg1 = node.arg1;
@@ -355,7 +383,6 @@ void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::Byteco
     }
     EmitArg(chunk, ctx, arg1);
     EmitArg(chunk, ctx, arg2);
-    // TODO: Not always Add/Mul LONG
     switch (node.op) {
       case ast::BinaryOperator::kAdd: 
         EmitNoParam(chunk, bytecode::Opcode::kAddLong);

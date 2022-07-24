@@ -16,3 +16,7 @@ $ cargo install mdbook
 $ cd $PROJ_ROOT/doc
 $ mdbook build
 ```
+### Running `.aasm`
+```sh
+$ bazel run //:aasm -- $THEFILE
+```

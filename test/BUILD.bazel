@@ -24,9 +24,9 @@ cc_test(
 )
 
 cc_test(
-    name = "ast_test",
+    name = "bytecode_unit_tests",
     srcs = [
-        "ast/lower_ast_test.cc"
+        "bytecode_unit_tests.cc",
     ],
     deps = [
         "@com_github_google_googletest//:gtest",

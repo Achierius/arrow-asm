@@ -36,7 +36,6 @@ cc_library(
         "llvm_test.cc",
     ],
     deps = [
-        "@llvm-project//llvm:ir_headers",
-        "@llvm-project//llvm:Support",
+        "@llvm//13.0.0",
     ],
 )

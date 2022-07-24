@@ -9,9 +9,9 @@
 namespace ast {
 
 enum AstNodeType {
-  kProgram = 0,
-  kStatement,
-  kNop,
+  kNop = 0,
+  kProgram,
+  kStatement
 };
 
 template <AstNodeType node_type> struct AstNode {
@@ -21,7 +21,7 @@ template <AstNodeType node_type> struct AstNode {
 
 struct NopNode : public AstNode<kNop> {};
 
-struct StatementNode : public AstNode<kNop>,
+struct StatementNode : public AstNode<kStatement>,
                        public std::variant<std::monostate, NopNode> {
  using std::variant<std::monostate, NopNode>::operator=;
 };

@@ -1,3 +1,4 @@
 fn main {
-  print 0
+  print 5
+  trap
 }

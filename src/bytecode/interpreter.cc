@@ -176,11 +176,16 @@ int bytecode::InterpretBytecode(BytecodeExecutable executable) {
   std::stack<StackFrame> return_stack;
   Instruction instr;
   //  - various counters
-  int chunk_idx = 0;       // current executing chunk ID
+  int chunk_idx = 1;       // current executing chunk ID. We start at 1, 0 is our implicit empty chunk
   int cycle_count = 0;     // how many instructions we've executed
   int pc = 0; // within chunk
   int constant_window_base = 0; // within current chunk
   int global_window_base = 0; // within current chunk
+
+  if (chunk_idx >= chunks.size()) {
+    // We have no chunks, basically a noop program.
+    return 0;
+  }
 
   // debug-only hook that gets called every time we dispatch to let us log stuff
   auto debug_dispatch_hook = [&](){

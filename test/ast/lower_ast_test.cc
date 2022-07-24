@@ -9,6 +9,7 @@
 #include "src/ast/ast.hh"
 #include "src/ast/bytecode_emitter.hh"
 #include "src/bytecode/bytecode.hh"
+#include "src/bytecode/interpreter.hh"
 #include "spdlog/spdlog.h"
 
 namespace {
@@ -35,9 +36,12 @@ TEST(LowerAstTest, NopTest) {
       spdlog::info("Constant: {}", cons);
     }
     for (auto const& inst : c.code) {
-      spdlog::info("Inst: {}, {}", inst.opcode, inst.param);
+      spdlog::info("Inst: 0x{0:x}, {1:d}", inst.opcode, inst.param);
     }
   }
+  spdlog::info("Running code...");
+  int return_code = bytecode::InterpretBytecode(executable);
+  EXPECT_EQ(return_code, 0);
 }
 
 }

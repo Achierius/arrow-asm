@@ -12,6 +12,7 @@ namespace bytecode {
 
 struct ClassId { int idx; };
 struct ChunkId { int idx; };
+struct FieldId { int idx; };
 using Value = int64_t;
 using Address = uint64_t; // TODO wrap this in a struct to prevent conversion
 struct Instruction {
@@ -44,7 +45,7 @@ struct BytecodeExecutable {
   // symbol tables which embed 'external' chunks, since we don't actually need
   // to have everything pinned w/in an address space (?)
   int index;
-  using Symbol = std::variant<std::monostate, Address, ClassId, ChunkId>;
+  using Symbol = std::variant<std::monostate, Address, ClassId, ChunkId, FieldId>;
   std::unordered_map<std::string, Symbol> symbol_table;
 
   enum ValueType {

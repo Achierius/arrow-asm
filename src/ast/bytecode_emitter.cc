@@ -21,10 +21,32 @@ struct FuncInstContext {
   std::array<bool, 16> p_usage_map;
   /// @brief The types of the or registers for this function
   std::array<std::optional<ast::RegisterTypeNode>, 64> reg_types;
+  /// @brief Parent context (for nested contexts, ex, if/loops)
+  FuncInstContext* parent = nullptr;
+  private:
   /// @brief The rvalue that is currently on the top of the stack, or nullopt for unknown/nothing/not an rvalue
   std::list<ast::ArgNode> top_list;
   /// @brief Map from immediate to constant index in chunk.
   std::unordered_map<int64_t, int> constants;
+
+  public:
+  std::optional<int> has_constant(int64_t val) {
+    if (parent) {
+      return parent->has_constant(val);
+    }
+    auto itr = constants.find(val);
+    if (itr != constants.end()) {
+      return itr->second;
+    }
+    return std::nullopt;
+  }
+  void add_constant(int64_t val, int idx) {
+    if (parent) {
+      parent->add_constant(val, idx);
+    } else {
+      constants.insert({val, idx});
+    }
+  }
 
   void assign_top(ast::ArgNode const& arg) {
     top_list.push_front(arg);
@@ -129,15 +151,15 @@ void EmitArg(bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::ArgNode 
       if (std::holds_alternative<int64_t>(imm)) {
         auto val = std::get<int64_t>(imm);
         // Check to see if this is a constant, if it is, grab it
-        auto itr = ctx.constants.find(val);
+        auto constant_idx_opt = ctx.has_constant(val);
         int constant_idx;
-        if (itr != ctx.constants.end()) {
+        if (constant_idx_opt) {
           // Found the constant, use the index
-          constant_idx = itr->second;
+          constant_idx = *constant_idx_opt;
         } else {
           constant_idx = chunk.constants.size();
           chunk.constants.push_back(val);
-          ctx.constants.insert({val, constant_idx});
+          ctx.add_constant(val, constant_idx);
         }
         // Need to add it as a constant
         Emit(chunk, bytecode::Instruction{
@@ -161,11 +183,91 @@ void EmitArg(bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::ArgNode 
   ctx.assign_top(arg);
 }
 
+void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst);
+
+void EmitIf(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx,
+            std::vector<std::shared_ptr<ast::InstructionNode>> const& body, std::optional<ast::ArgNode> condition,
+            std::vector<int>& lasts, std::vector<FuncInstContext>& contexts) {
+  int first;
+  // Create context
+  contexts.emplace_back();
+  auto& nested_ctx = contexts.back();
+  nested_ctx.parent = &ctx;
+  // Copy our (known) type information to our nested context.
+  std::copy(ctx.reg_types.begin(), ctx.reg_types.end(), nested_ctx.reg_types.begin());
+  if (condition) {
+    // First, we handle our if condition
+    EmitArg(chunk, ctx, *condition);
+    Emit(chunk, bytecode::Instruction{
+      .opcode = bytecode::kUnaryNegate,
+      .param = 0
+    });
+    // We need to negate so that TestAndJump jumps us if we do NOT match
+    first = chunk.code.size();
+    Emit(chunk, bytecode::Instruction{
+      .opcode = bytecode::Opcode::kTestAndJump,
+      .param = 0 // PLACEHOLDER
+    });
+  }
+  
+  // Now we handle the if body
+  for (auto const& i : body) {
+    HandleInstruction(exe, chunk, nested_ctx, *i);
+  }
+  lasts.push_back(chunk.code.size());
+  if (condition) {
+    // Only need to emit a final jump if we aren't an else block
+    Emit(chunk, bytecode::Instruction{
+      .opcode = bytecode::Opcode::kJump,
+      .param = 0 // PLACEHOLDER
+    });
+  }
+  if (condition) {
+    // We can go back now to our first and modify the param
+    chunk.code[first].param = static_cast<int8_t>(chunk.code.size() - first);
+  }
+}
+
 // TODO: Return bool?
-void HandleInstruction(bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst) {
+void HandleInstruction(bytecode::BytecodeExecutable const& exe, bytecode::BytecodeChunk& chunk, FuncInstContext& ctx, ast::InstructionNode const& inst) {
   auto const& instr = inst;
   // ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode
-  if (std::holds_alternative<ast::NoArgNode>(instr)) {
+  if (std::holds_alternative<ast::IfNode>(instr)) {
+    auto const& ifstmt = std::get<ast::IfNode>(instr);
+    // If statements (and all nested statements) are kind of interesting
+    // We keep our context, but we need a new one (so we don't taint our existing one)
+    // per if/elif/else branch.
+    // Then, at the end, we can union all of these contexts together
+    // to continue to get the best possible type checking we can
+    std::vector<FuncInstContext> contexts;
+    int blocks = 1 + ifstmt.elifs.size() + (ifstmt.else_node ? 1 : 0);
+    contexts.reserve(blocks);
+    // lasts is a vector of pointers to our last instruction in each if
+    // essentially, the 'jump to end' logic
+    std::vector<int> lasts;
+    lasts.reserve(blocks);
+
+    EmitIf(exe, chunk, ctx, ifstmt.body, ifstmt.condition, lasts, contexts);
+    // For each elif, do the same thing:
+    for (auto const& elif : ifstmt.elifs) {
+      EmitIf(exe, chunk, ctx, elif.body, elif.condition, lasts, contexts);
+    }
+
+    if (ifstmt.else_node) {
+      EmitIf(exe, chunk, ctx, ifstmt.else_node->body, std::nullopt, lasts, contexts);
+    }
+    // Ensure we have a landing pad for our nested blocks to land at
+    auto landing_pad_idx = chunk.code.size();
+    Emit(chunk, bytecode::Instruction{
+      .opcode = bytecode::Opcode::kNop,
+      .param = 0
+    });
+    // Now, walk our lasts and fix them up
+    for (auto idx : lasts) {
+      chunk.code[idx].param = static_cast<int8_t>(landing_pad_idx - idx); 
+    }
+    // TODO: Walk our types and apply a union to our top level context
+  } else if (std::holds_alternative<ast::NoArgNode>(instr)) {
     auto& node = std::get<ast::NoArgNode>(instr);
     switch (node.op) {
       case ast::NoArgOperator::kTrap: {
@@ -263,13 +365,79 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
   // so that we can resolve calls (and also dependent types?)
 
   bytecode::BytecodeExecutable exe{};
-  int loc = 0;
+  // Set up empty return chunk
+  exe.chunks.push_back(bytecode::BytecodeChunk{
+    .code{{bytecode::Instruction{
+      .opcode = bytecode::Opcode::kReturn,
+      .param = 0
+    }}}
+  });
+  exe.chunk_locations.push_back(0);
+  // First pass, add records
+  int chunkId = 1;
+  int typeId = 0;
+  std::unordered_map<std::string, std::pair<int, int>> type_method_map{};
+  for (auto const& stmt : ast.statements) {
+    if (std::holds_alternative<ast::FunctionNode>(*stmt)) {
+      auto func = std::get<ast::FunctionNode>(*stmt);
+      // Functions are 1-to-1 to chunks
+      exe.chunk_locations.push_back(chunkId);
+      if (exe.symbol_table.find(func.id.id) != exe.symbol_table.end()) {
+        // TODO: ERROR (Duplicate function definition/clash!)
+      }
+      exe.symbol_table.insert({func.id.id, bytecode::ChunkId { .idx = chunkId++ }});
+      exe.chunks.push_back(bytecode::BytecodeChunk{});
+    } else if (std::holds_alternative<ast::TypeNode>(*stmt)) {
+      auto type = std::get<ast::TypeNode>(*stmt);
+      int cidx = 0, didx = 0;
+      if (type.ctor) {
+        cidx = chunkId;
+        exe.chunk_locations.push_back(chunkId);
+        exe.chunks.push_back(bytecode::BytecodeChunk{});
+      }
+      if (type.dtor) {
+        didx = chunkId;
+        exe.chunk_locations.push_back(chunkId);
+        exe.chunks.push_back(bytecode::BytecodeChunk{});
+      }
+      // First field starts at 1, there's an implicit 0th field.
+      int fOffset = 1;
+      bytecode::BytecodeExecutable::ClassDataRecord record{
+        .name = type.id.id,
+        .ctor_chunk = bytecode::ChunkId { .idx = cidx },
+        .dtor_chunk = bytecode::ChunkId { .idx = didx },
+      };
+
+      for (auto const& f : type.fields) {
+        // Add field to symbol table as Type:fid
+        exe.symbol_table.insert({type.id.id + ':' + f->id.id, bytecode::FieldId { fOffset++ }});
+        if (std::holds_alternative<LongNode>(f->type)) {
+          record.fields.push_back(bytecode::BytecodeExecutable::ValueType::kLong);
+        } else if (std::holds_alternative<DoubleNode>(f->type)) {
+          record.fields.push_back(bytecode::BytecodeExecutable::ValueType::kDouble);
+        } else if (std::holds_alternative<PtrNode>(f->type)) {
+          record.fields.push_back(bytecode::BytecodeExecutable::ValueType::kDataPtr);
+        } else {
+          // TODO: ERROR (unknown field type)
+        }
+      }
+      if (type_method_map.find(type.id.id) != type_method_map.end()) {
+        // TODO: ERROR (Duplicate type name!)
+      }
+      type_method_map.insert({type.id.id, {cidx, didx}});
+      if (exe.symbol_table.find(type.id.id) != exe.symbol_table.end()) {
+        // TODO: ERROR (Type/method name clash!)
+      }
+      exe.symbol_table.insert({type.id.id, bytecode::ClassId { .idx = typeId++ }});
+      exe.classes.push_back(record);
+    }
+  }
   for (auto& stmt : ast.statements) {
-    if (std::holds_alternative<ast::FunctionNode>(*stmt.get())) {
-      auto func = std::get<ast::FunctionNode>(*stmt.get());
+    if (std::holds_alternative<ast::FunctionNode>(*stmt)) {
+      auto func = std::get<ast::FunctionNode>(*stmt);
       // Functions are 1-to-1 of blocks
-      bytecode::BytecodeChunk chunk{};
-      auto symbol = func.id;
+      auto const& symbol = func.id;
+      auto& chunk = exe.chunks[std::get<bytecode::ChunkId>(exe.symbol_table[symbol.id]).idx];
       FuncInstContext ctx{};
       for (int i = 0; i < func.params.size(); ++i) {
         ctx.reg_types[TranslateRegister(ast::RegisterNode{
@@ -278,11 +446,48 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode& ast) {
         })] = *func.params[i];
       }
       for (auto& inst : func.body) {
-        HandleInstruction(chunk, ctx, *inst);
+        HandleInstruction(exe, chunk, ctx, *inst);
       }
-      exe.chunks.push_back(chunk);
-      exe.symbol_table[symbol.id] = bytecode::ChunkId{loc};
-      exe.chunk_locations.push_back(loc++);
+    } else if (std::holds_alternative<ast::TypeNode>(*stmt)) {
+      auto type = std::get<ast::TypeNode>(*stmt);
+      auto [ctor, dtor] = type_method_map[type.id.id];
+
+      // Handle ctor
+      if (type.ctor) {
+        auto& chunk = exe.chunks[ctor];
+        auto const& func = *type.ctor;
+        FuncInstContext ctx{};
+        for (int i = 0; i < func.params.size(); ++i) {
+          ctx.reg_types[TranslateRegister(ast::RegisterNode{
+            .category = ast::RegisterCategory::Param,
+            .register_id = static_cast<uint8_t>(i + 1)
+          })] = *func.params[i];
+        }
+        ctx.reg_types[TranslateRegister(ast::RegisterNode{
+          .category = ast::RegisterCategory::Param,
+          .register_id = static_cast<uint8_t>(0)
+        })] = ast::PtrNode{
+          .element_type = std::make_shared<ast::ObjectTypeNode>(type.id)
+        };
+        for (auto& inst : func.body) {
+          HandleInstruction(exe, chunk, ctx, *inst);
+        }
+      }
+      // Handle dtor
+      if (type.dtor) {
+        auto& chunk = exe.chunks[dtor];
+        auto const& func = *type.dtor;
+        FuncInstContext ctx{};
+        ctx.reg_types[TranslateRegister(ast::RegisterNode{
+          .category = ast::RegisterCategory::Param,
+          .register_id = static_cast<int8_t>(0)
+        })] = ast::PtrNode{
+          .element_type = std::make_shared<ast::ObjectTypeNode>(type.id)
+        };
+        for (auto& inst : func.body) {
+          HandleInstruction(exe, chunk, ctx, *inst);
+        }
+      }
     }
   }
   return exe;

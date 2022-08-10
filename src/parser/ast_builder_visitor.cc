@@ -13,7 +13,7 @@ std::any ASTBuilderVisitor::visitProgram(AasmParser::ProgramContext *ctx) {
     node.statements.push_back(std::make_shared<ast::StatementNode>(
         std::any_cast<ast::StatementNode>(visitStatement(statement))));
   }
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -31,7 +31,7 @@ std::any ASTBuilderVisitor::visitFunction_definition(
         std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(
             visitInstructions(ctx->instructions()));
   }
-  node.sourcePos = ctx->ID()->getSourceInterval().toString();
+  node.sourcePos = ctx->ID()->getSourceInterval();
   return ast::StatementNode(node);
 }
 
@@ -41,7 +41,7 @@ ASTBuilderVisitor::visitParameter_list(AasmParser::Parameter_listContext *ctx) {
   for (auto register_type : ctx->register_type()) {
     auto param =
         std::any_cast<ast::RegisterTypeNode>(visitRegister_type(register_type));
-    param.sourcePos = register_type->getSourceInterval().toString();
+    param.sourcePos = register_type->getSourceInterval();
     param_list.push_back(std::make_shared<ast::RegisterTypeNode>(param));
   }
   return param_list;
@@ -52,7 +52,7 @@ std::any ASTBuilderVisitor::visitType_definition(
   ast::TypeNode node;
   for (auto ctor : ctx->constructor()) {
     node.ctor = ast::CtorNode{
-        {.sourcePos{ctor->getSourceInterval().toString()}},
+        {.sourcePos{ctor->getSourceInterval()}},
         .params{(ctor->parameter_list())
                     ? std::any_cast<
                           std::vector<std::shared_ptr<ast::RegisterTypeNode>>>(
@@ -65,7 +65,7 @@ std::any ASTBuilderVisitor::visitType_definition(
 
   for (auto dtor : ctx->destructor()) {
     node.dtor = ast::DtorNode{
-        {.sourcePos{dtor->getSourceInterval().toString()}},
+        {.sourcePos{dtor->getSourceInterval()}},
         .body{std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(
             visitInstructions(dtor->instructions()))}};
   }
@@ -73,7 +73,7 @@ std::any ASTBuilderVisitor::visitType_definition(
     node.fields.push_back(std::make_shared<ast::FieldNode>(
         std::any_cast<ast::FieldNode>(visitField(field))));
   }
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return ast::StatementNode(node);
 }
 
@@ -124,16 +124,16 @@ std::any ASTBuilderVisitor::visitNo_arg_instruction(
     AasmParser::No_arg_instructionContext *ctx) {
   auto text = ctx->getText();
   if (text == "trap")
-    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval().toString()},
+    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval()},
                           .op = ast::NoArgOperator::kTrap};
   else if (text == "ret")
-    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval().toString()},
+    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval()},
                           .op = ast::NoArgOperator::kRet};
   else if (text == "break")
-    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval().toString()},
+    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval()},
                           .op = ast::NoArgOperator::kBreak};
   else if (text == "continue")
-    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval().toString()},
+    return ast::NoArgNode{{.sourcePos = ctx->getSourceInterval()},
                           .op = ast::NoArgOperator::kContinue};
   return {};
 }
@@ -143,7 +143,7 @@ std::any ASTBuilderVisitor::visitArrow_instruction(
   ast::ArrowInstNode node;
   node.lhs = std::any_cast<ast::ArrowLhsNode>(visitArrow_lhs(ctx->arrow_lhs()));
   node.rhs = std::any_cast<ast::ArrowRhsNode>(visitArrow_rhs(ctx->arrow_rhs()));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -151,13 +151,13 @@ std::any ASTBuilderVisitor::visitArrow_lhs(AasmParser::Arrow_lhsContext *ctx) {
   if (ctx->any_field()) {
     auto node =
         ast::ArrowLhsNode{std::any_cast<ast::MemberNode>(visitChildren(ctx))};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   if (ctx->any_lvalue()) {
     auto node =
         ast::ArrowLhsNode{std::any_cast<ast::LValueNode>(visitChildren(ctx))};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   return {};
@@ -167,19 +167,19 @@ std::any ASTBuilderVisitor::visitArrow_rhs(AasmParser::Arrow_rhsContext *ctx) {
   if (ctx->any_field()) {
     auto node =
         ast::ArrowRhsNode{std::any_cast<ast::MemberNode>(visitChildren(ctx))};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   if (ctx->any_rvalue()) {
     auto node =
         ast::ArrowRhsNode{std::any_cast<ast::RValueNode>(visitChildren(ctx))};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   if (ctx->make_constructor()) {
     auto node =
         ast::ArrowRhsNode{std::any_cast<ast::MakeNode>(visitChildren(ctx))};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   return {};
@@ -188,33 +188,33 @@ std::any ASTBuilderVisitor::visitArrow_rhs(AasmParser::Arrow_rhsContext *ctx) {
 std::any ASTBuilderVisitor::visitMake_constructor(
     AasmParser::Make_constructorContext *ctx) {
   return ast::MakeNode{
-      {.sourcePos = ctx->getSourceInterval().toString()},
+      {.sourcePos = ctx->getSourceInterval()},
       .type{std::any_cast<ast::ObjectTypeNode>(visitChildren(ctx))}};
 }
 
 std::any ASTBuilderVisitor::visitCall_instruction(
     AasmParser::Call_instructionContext *ctx) {
-  return ast::CallNode{{.sourcePos = ctx->getSourceInterval().toString()},
+  return ast::CallNode{{.sourcePos = ctx->getSourceInterval()},
                        .id{ast::IdNode{.id = ctx->ID()->getText()}}};
 }
 
 std::any ASTBuilderVisitor::visitPrint_instruction(
     AasmParser::Print_instructionContext *ctx) {
-  return ast::NoRetNode{{.sourcePos = ctx->getSourceInterval().toString()},
+  return ast::NoRetNode{{.sourcePos = ctx->getSourceInterval()},
                         .op = ast::NoRetOperator::kPrint,
                         .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx))};
 }
 
 std::any ASTBuilderVisitor::visitPrintch_instruction(
     AasmParser::Printch_instructionContext *ctx) {
-  return ast::NoRetNode{{.sourcePos = ctx->getSourceInterval().toString()},
+  return ast::NoRetNode{{.sourcePos = ctx->getSourceInterval()},
                         .op = ast::NoRetOperator::kPrintChar,
                         .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx))};
 }
 
 std::any ASTBuilderVisitor::visitExit_instruction(
     AasmParser::Exit_instructionContext *ctx) {
-  return ast::NoRetNode{{.sourcePos = ctx->getSourceInterval().toString()},
+  return ast::NoRetNode{{.sourcePos = ctx->getSourceInterval()},
                         .op = ast::NoRetOperator::kExit,
                         .arg = std::any_cast<ast::ArgNode>(visitChildren(ctx))};
 }
@@ -226,7 +226,7 @@ std::any ASTBuilderVisitor::visitUnary_operator_instruction(
       visitUnary_operator(ctx->unary_operator()));
   node.lhs = std::any_cast<ast::LValueNode>(visitAny_lvalue(ctx->arg1));
   node.rhs = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->arg2));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -238,7 +238,7 @@ std::any ASTBuilderVisitor::visitBinary_operator_instruction(
   node.lhs = std::any_cast<ast::LValueNode>(visitAny_lvalue(ctx->arg1));
   node.arg1 = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->arg2));
   node.arg2 = std::any_cast<ast::ArgNode>(visitAny_argument(ctx->arg3));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -252,7 +252,7 @@ std::any ASTBuilderVisitor::visitMemory_instruction(
   node.memory_location = std::any_cast<
       std::variant<std::monostate, ast::RValueNode, ast::MemberNode>>(
       visitMemory_destination(ctx->arg2));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -334,7 +334,7 @@ ASTBuilderVisitor::visitAny_lvalue(AasmParser::Any_lvalueContext *ctx) {
     node.category = ast::RegisterCategory::Global;
     node.register_id = std::stoi(text.substr(2));
   }
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -343,13 +343,13 @@ ASTBuilderVisitor::visitAny_argument(AasmParser::Any_argumentContext *ctx) {
   if (ctx->any_rvalue()) {
     auto node = ast::ArgNode(
         std::any_cast<ast::RValueNode>(visitAny_rvalue(ctx->any_rvalue())));
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   if (ctx->any_number()) {
     auto node = ast::ArgNode(
         std::any_cast<ast::ImmediateNode>(visitAny_number(ctx->any_number())));
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   return {};
@@ -375,7 +375,7 @@ ASTBuilderVisitor::visitAny_rvalue(AasmParser::Any_rvalueContext *ctx) {
     node.category = ast::RegisterCategory::Global;
     node.register_id = std::stoi(text.substr(2));
   }
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -384,18 +384,18 @@ ASTBuilderVisitor::visitAny_number(AasmParser::Any_numberContext *ctx) {
   std::string text = ctx->getText();
   if (text.find('.') != std::string::npos) {
     auto node = ast::ImmediateNode(std::stod(ctx->getText()));
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   auto node =
       ast::ImmediateNode(static_cast<int64_t>(std::stol(ctx->getText())));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
 std::any ASTBuilderVisitor::visitAny_field(AasmParser::Any_fieldContext *ctx) {
   return ast::MemberNode{
-      {.sourcePos = ctx->getSourceInterval().toString()},
+      {.sourcePos = ctx->getSourceInterval()},
       .obj{std::any_cast<ast::RValueNode>(visitAny_rvalue(ctx->any_rvalue()))},
       .type{ast::IdNode{.id = ctx->type_name->getText()}},
       .field{ast::IdNode{.id = ctx->field_name->getText()}}};
@@ -406,22 +406,22 @@ ASTBuilderVisitor::visitObject_type(AasmParser::Object_typeContext *ctx) {
   auto text = ctx->getText();
   if (text.starts_with("long")) {
     auto node = ast::ObjectTypeNode{ast::LongNode()};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   } else if (text.starts_with("double")) {
     auto node = ast::ObjectTypeNode{ast::DoubleNode()};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   } else if (text.starts_with("ptr")) {
     auto element_type = std::any_cast<ast::ObjectTypeNode>(
         visitObject_type(ctx->object_type()));
     auto node = ast::ObjectTypeNode{ast::PtrNode{
         .element_type{std::make_shared<ast::ObjectTypeNode>(element_type)}}};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   auto node = ast::ObjectTypeNode{ast::IdNode{.id = ctx->ID()->getText()}};
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -430,25 +430,25 @@ ASTBuilderVisitor::visitRegister_type(AasmParser::Register_typeContext *ctx) {
   auto text = ctx->getText();
   if (text.starts_with("long")) {
     auto node = ast::RegisterTypeNode{ast::LongNode()};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   } else if (text.starts_with("double")) {
     auto node = ast::RegisterTypeNode{ast::DoubleNode()};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   } else if (text.starts_with("ptr")) {
     auto element_type = std::any_cast<ast::ObjectTypeNode>(
         visitObject_type(ctx->object_type()));
     auto node = ast::RegisterTypeNode{ast::PtrNode{
         .element_type{std::make_shared<ast::ObjectTypeNode>(element_type)}}};
-    node.sourcePos = ctx->getSourceInterval().toString();
+    node.sourcePos = ctx->getSourceInterval();
     return node;
   }
   return {};
 }
 
 std::any ASTBuilderVisitor::visitField(AasmParser::FieldContext *ctx) {
-  return ast::FieldNode{{.sourcePos = ctx->getSourceInterval().toString()},
+  return ast::FieldNode{{.sourcePos = ctx->getSourceInterval()},
                         .id = ast::IdNode{.id = ctx->ID()->getText()},
                         .type{std::any_cast<ast::RegisterTypeNode>(
                             visitRegister_type(ctx->register_type()))}};
@@ -469,7 +469,7 @@ ASTBuilderVisitor::visitIf_statement(AasmParser::If_statementContext *ctx) {
     node.else_node =
         std::any_cast<ast::ElseNode>(visitElse_branch(ctx->else_branch()));
   }
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -480,7 +480,7 @@ ASTBuilderVisitor::visitElif_branch(AasmParser::Elif_branchContext *ctx) {
       std::any_cast<ast::ArgNode>(visitAny_argument(ctx->any_argument()));
   node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(
       visitInstructions(ctx->instructions()));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -489,7 +489,7 @@ ASTBuilderVisitor::visitElse_branch(AasmParser::Else_branchContext *ctx) {
   ast::ElseNode node;
   node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(
       visitInstructions(ctx->instructions()));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 
@@ -500,7 +500,7 @@ ASTBuilderVisitor::visitWhile_loop(AasmParser::While_loopContext *ctx) {
       std::any_cast<ast::ArgNode>(visitAny_argument(ctx->any_argument()));
   node.body = std::any_cast<std::vector<std::shared_ptr<ast::InstructionNode>>>(
       visitInstructions(ctx->instructions()));
-  node.sourcePos = ctx->getSourceInterval().toString();
+  node.sourcePos = ctx->getSourceInterval();
   return node;
 }
 } // namespace parser

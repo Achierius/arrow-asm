@@ -9,6 +9,8 @@
 #include <variant>
 #include <vector>
 
+#include "misc/Interval.h"
+
 namespace ast {
 
 enum AstNodeType {
@@ -54,7 +56,7 @@ template <AstNodeType node_type> struct AstNode {
   constexpr static AstNodeType type = node_type;
   // TODO @j1ah0ng This is a string until we can somehow get a sane view into
   // underyling source file using literal col/row pos
-  std::string sourcePos;
+  antlr4::misc::Interval sourcePos;
 };
 
 struct NopNode : public AstNode<kNop> {};

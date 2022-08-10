@@ -4,8 +4,10 @@
 #include "src/ast/ast.hh"
 #include "src/parser/AasmLexer.h"
 #include "src/parser/AasmParser.h"
+#include "src/parser/ast_builder_visitor.hh"
 #include <string>
+#include <tuple>
 
 namespace parser {
-ast::ProgramNode ParseFullProgram(std::string program_text);
+std::tuple<ast::ProgramNode, antlr4::ANTLRInputStream> ParseFullProgram(std::string program_text);
 } // namespace parser

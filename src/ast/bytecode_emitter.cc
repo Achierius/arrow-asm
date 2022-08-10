@@ -18,7 +18,7 @@
 #include "src/bytecode/opcodes.hh"
 
 #define AASM_COMPILE_ERROR(msg, arg)                                           \
-  std::cerr << msg << " at\n" << arg.sourcePos << std::endl;
+  std::cerr << msg << " at\n" << input.getText(arg.sourcePos) << std::endl;
 
 struct FuncInstContext {
   /// @brief Holds T/F for each p register.
@@ -193,13 +193,15 @@ void EmitArg(bytecode::BytecodeChunk &chunk, FuncInstContext &ctx,
 
 void HandleInstruction(bytecode::BytecodeExecutable &exe,
                        bytecode::BytecodeChunk &chunk, FuncInstContext &ctx,
-                       ast::InstructionNode const &inst);
+                       ast::InstructionNode const &inst, 
+                       antlr4::ANTLRInputStream &input);
 
 void EmitIf(bytecode::BytecodeExecutable &exe, bytecode::BytecodeChunk &chunk,
             FuncInstContext &ctx,
             std::vector<std::shared_ptr<ast::InstructionNode>> const &body,
             std::optional<ast::ArgNode> condition, std::vector<int> &lasts,
-            std::vector<FuncInstContext> &contexts) {
+            std::vector<FuncInstContext> &contexts, 
+            antlr4::ANTLRInputStream &input) {
   int first;
   // Create context
   contexts.emplace_back();
@@ -224,7 +226,7 @@ void EmitIf(bytecode::BytecodeExecutable &exe, bytecode::BytecodeChunk &chunk,
 
   // Now we handle the if body
   for (auto const &i : body) {
-    HandleInstruction(exe, chunk, nested_ctx, *i);
+    HandleInstruction(exe, chunk, nested_ctx, *i, input);
   }
   lasts.push_back(chunk.code.size());
   if (condition) {
@@ -243,7 +245,8 @@ void EmitIf(bytecode::BytecodeExecutable &exe, bytecode::BytecodeChunk &chunk,
 void EmitWhile(bytecode::BytecodeExecutable &exe,
                bytecode::BytecodeChunk &chunk, FuncInstContext &ctx,
                std::vector<std::shared_ptr<ast::InstructionNode>> const &body,
-               ast::ArgNode condition, FuncInstContext &nested_ctx) {
+               ast::ArgNode condition, FuncInstContext &nested_ctx, 
+               antlr4::ANTLRInputStream &input) {
   nested_ctx.parent = &ctx;
   // Copy our (known) type information to our nested context.
   std::copy(ctx.reg_types.begin(), ctx.reg_types.end(),
@@ -264,7 +267,7 @@ void EmitWhile(bytecode::BytecodeExecutable &exe,
 
   // Now we handle the loop body
   for (auto const &i : body) {
-    HandleInstruction(exe, chunk, nested_ctx, *i);
+    HandleInstruction(exe, chunk, nested_ctx, *i, input);
   }
 
   int header_offset = loop_header - (int)chunk.code.size();
@@ -293,7 +296,8 @@ std::string symb_name(ast::ObjectTypeNode const &o) {
 // TODO: Return bool?
 void HandleInstruction(bytecode::BytecodeExecutable &exe,
                        bytecode::BytecodeChunk &chunk, FuncInstContext &ctx,
-                       ast::InstructionNode const &inst) {
+                       ast::InstructionNode const &inst,
+                       antlr4::ANTLRInputStream &input) {
   auto const &instr = inst;
   // ArrowInstNode, NoArgNode, NoRetNode, BinaryNode, MemoryNode, IfNode,
   // WhileNode
@@ -312,15 +316,15 @@ void HandleInstruction(bytecode::BytecodeExecutable &exe,
     std::vector<int> lasts;
     lasts.reserve(blocks);
 
-    EmitIf(exe, chunk, ctx, ifstmt.body, ifstmt.condition, lasts, contexts);
+    EmitIf(exe, chunk, ctx, ifstmt.body, ifstmt.condition, lasts, contexts, input);
     // For each elif, do the same thing:
     for (auto const &elif : ifstmt.elifs) {
-      EmitIf(exe, chunk, ctx, elif.body, elif.condition, lasts, contexts);
+      EmitIf(exe, chunk, ctx, elif.body, elif.condition, lasts, contexts, input);
     }
 
     if (ifstmt.else_node) {
       EmitIf(exe, chunk, ctx, ifstmt.else_node->body, std::nullopt, lasts,
-             contexts);
+             contexts, input);
     }
     // Ensure we have a landing pad for our nested blocks to land at
     auto landing_pad_idx = chunk.code.size();
@@ -337,7 +341,7 @@ void HandleInstruction(bytecode::BytecodeExecutable &exe,
 
     FuncInstContext nested_ctx;
     EmitWhile(exe, chunk, ctx, while_loop.body, while_loop.condition,
-              nested_ctx);
+              nested_ctx, input);
 
     // Ensure we have a landing pad when condition fails
     Emit(chunk,
@@ -669,7 +673,7 @@ void HandleInstruction(bytecode::BytecodeExecutable &exe,
 
 static std::unordered_set<std::string> primitives{"long", "double", "ptr"};
 
-bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode &ast) {
+bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode &ast, antlr4::ANTLRInputStream& input) {
   bytecode::BytecodeExecutable exe{};
   // Set up empty return chunk
   exe.chunks.push_back(bytecode::BytecodeChunk{.code{{bytecode::Instruction{
@@ -761,7 +765,7 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode &ast) {
             .register_id = static_cast<uint8_t>(i)})] = *func.params[i];
       }
       for (auto &inst : func.body) {
-        HandleInstruction(exe, chunk, ctx, *inst);
+        HandleInstruction(exe, chunk, ctx, *inst, input);
       }
     } else if (std::holds_alternative<ast::TypeNode>(*stmt)) {
       auto type = std::get<ast::TypeNode>(*stmt);
@@ -783,7 +787,7 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode &ast) {
             ast::PtrNode{.element_type =
                              std::make_shared<ast::ObjectTypeNode>(type.id)};
         for (auto &inst : func.body) {
-          HandleInstruction(exe, chunk, ctx, *inst);
+          HandleInstruction(exe, chunk, ctx, *inst, input);
         }
       }
       // Handle dtor
@@ -797,7 +801,7 @@ bytecode::BytecodeExecutable ast::LowerAst(const ProgramNode &ast) {
             ast::PtrNode{.element_type =
                              std::make_shared<ast::ObjectTypeNode>(type.id)};
         for (auto &inst : func.body) {
-          HandleInstruction(exe, chunk, ctx, *inst);
+          HandleInstruction(exe, chunk, ctx, *inst, input);
         }
       }
     }

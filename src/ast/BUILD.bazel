@@ -2,6 +2,9 @@ cc_library(
     name = "ast",
     hdrs = ["ast.hh"],
     visibility = ["//visibility:public"],
+    deps = [
+        "@antlr4_runtimes//:cpp",
+    ],
 )
 
 cc_library(
@@ -11,6 +14,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_gabime_spdlog//:spdlog",
+        "@antlr4_runtimes//:cpp",
         "//src/ast:ast",
         "//src/bytecode:bytecode",
     ],

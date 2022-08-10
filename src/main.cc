@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
   // now drive our compilation stack (sans code emission) to run it
   // also just a general top-level TODO: need to make sure we actually pass
   // along source locations so that we can give useful errors
-  ast::ProgramNode program = parser::ParseFullProgram(program_text);
-  bytecode::BytecodeExecutable executable = ast::LowerAst(program);
+  auto [program, input] = parser::ParseFullProgram(program_text);
+  bytecode::BytecodeExecutable executable = ast::LowerAst(program, input);
   return bytecode::InterpretBytecode(executable);
 }

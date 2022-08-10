@@ -1,3 +1,5 @@
+#pragma once
+
 #include "src/parser/AasmBaseVisitor.h"
 
 #include "src/ast/ast.hh"
